@@ -22,3 +22,5 @@ The bundle is accessed with a read-only deploy key held as a Vercel secret. To r
 ## Licence
 
 Open Silicon SG's original code is licensed under Apache License 2.0; see `LICENSE`. The vendored Anatomy kit under `src/kit/` has its own MIT licence. Third-party trademarks and assets are not covered by the Apache licence.
+
+Pushes to `main` create production deployments; other branches create previews.
