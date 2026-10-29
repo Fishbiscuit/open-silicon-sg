@@ -8,7 +8,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { k, THEME_CSS, esc, r2 } from "./lib.mjs";
+import { k, THEME_CSS, esc, r2, emphasise } from "./lib.mjs";
 import { schemeCss, SCHEMES } from "../design/schemes.mjs";
 import { PAGE_CSS } from "./styles.mjs";
 import { readDoc, check, collection, markdown, inline, ContentError } from "./content.mjs";
@@ -40,12 +40,12 @@ const S = {
   site: { name: "string", wordmark: "string", wordmark_suffix: "string?", mark_symbol: "string?", mark_label: "string?", title: "string", nav: "list", footer: "text?", github: "url?", credits: "text", credits_label: "string?" },
   home: {
     hero_eyebrow: "string", hero_title: "string", hero_emphasis: "string?", hero_lede: "text", hero_actions: "list?",
-    events_eyebrow: "string?", events_title: "string", events_intro: "text?",
+    events_eyebrow: "string?", events_title: "string", events_emphasis: "string?", events_intro: "text?",
     exhibition_title: "string", exhibition_intro: "text?", exhibition_dates: "string?", exhibition_link: "url?", exhibition_link_label: "string?", exhibition_carousel_title: "string?", exhibition_all_label: "string?", exhibition_areas: "list?",
-    about_eyebrow: "string?", about_title: "string", about_text: "text", audiences: "list?", join_title: "string?", join: "list?",
+    about_eyebrow: "string?", about_title: "string", about_emphasis: "string?", about_text: "text", audiences: "list?", join_title: "string?", join: "list?",
   },
   hero: { readout: "string?", open_title: "string?", open: "text?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
-  fab: { eyebrow: "string", title: "string", intro: "text", lead_note: "string?", readout: "string?", closing_label: "string", closing_title: "string", closing: "text", stations: "list" },
+  fab: { eyebrow: "string", title: "string", title_emphasis: "string?", intro: "text", lead_note: "string?", readout: "string?", closing_label: "string", closing_title: "string", closing: "text", stations: "list" },
   proposal: { doc_label: "string", doc_date: "string", guide_title: "string", guide: "list", eyebrow: "string", title: "string", sub: "text", footer: "text" },
   section: { n: "string", id: "string", title: "string", claims: "list?", sitemap: "map?", timeline: "list?" },
   event: { title: "string", kind: "workshop|talk|symposium|showcase|milestone", start: "date", end: "date?", confirmed: "boolean", window: "string?", time: "string?", venue: "string?", with: "list?", audience: "list?", level: "beginner|intermediate|advanced|all?", signup: "url?", summary: "text", public: "boolean?", source: "string?" },
@@ -166,9 +166,7 @@ function heroSection(home, hero, figs, site) {
   layers.push(layer("end", 'data-layer="end"', { ...end, id: "end" }));
   const data = JSON.stringify({ beats, open: open.data, openCopy: hero.open ?? "", openTitle: hero.open_title ?? "", end: end.data, crystal: hero.crystal ?? "", crystalTitle: hero.crystal_title ?? "", finale: hero.finale, finaleTitle: hero.finale_title }).replace(/</g, "\\u003c");
   const actions = (home.hero_actions ?? []).map((a, i) => `<a class="btn${i ? "" : " prime"}" href="${esc(a.href)}">${esc(a.label)}</a>`).join("");
-  const headline = home.hero_emphasis && home.hero_title.startsWith(home.hero_emphasis)
-    ? `<span class="hero-emphasis">${esc(home.hero_emphasis)}</span>${esc(home.hero_title.slice(home.hero_emphasis.length))}`
-    : esc(home.hero_title);
+  const headline = emphasise(home.hero_title, home.hero_emphasis);
   return `
 <section class="hero iso" data-hero id="study" aria-labelledby="hero-title">
   <div class="hero-grid">
@@ -215,7 +213,7 @@ function when(e) {
   const range = a.y === b.y ? (a.m === b.m ? `${a.d}–${b.text}` : `${a.d} ${MONTHS[a.m - 1]} – ${b.text}`) : `${a.text} – ${b.text}`;
   return `<span class="ev-when">${range}${e.time ? `<small>${esc(e.time)}</small>` : ""}</span>`;
 }
-const sectionHead = (id, eyebrow, title, intro, extra = "") => `<div class="s-head"><div>${eyebrow ? `<p class="eyebrow">${esc(eyebrow)}</p>` : ""}<h2 id="${id}">${esc(title)}</h2></div><div class="s-intro">${intro ? `<p>${inline(intro)}</p>` : ""}${extra}</div></div>`;
+const sectionHead = (id, eyebrow, title, intro, extra = "", emphasis = "") => `<div class="s-head"><div>${eyebrow ? `<p class="eyebrow">${esc(eyebrow)}</p>` : ""}<h2 id="${id}">${emphasise(title, emphasis)}</h2></div><div class="s-intro">${intro ? `<p>${inline(intro)}</p>` : ""}${extra}</div></div>`;
 
 function eventsSection(home, events) {
   const last = (e) => e.data.end ?? e.data.start;
@@ -233,7 +231,7 @@ function eventsSection(home, events) {
   return `
 <section class="block events gutter" id="events" aria-labelledby="events-title">
   <div class="wrap">
-    ${sectionHead("events-title", home.events_eyebrow, home.events_title, home.events_intro)}
+    ${sectionHead("events-title", home.events_eyebrow, home.events_title, home.events_intro, "", home.events_emphasis)}
     ${group("Upcoming", `${next.length ? list(next) : `<p class="ev-empty">Nothing scheduled yet. New sessions appear here as soon as they are confirmed.</p>`}${more.length ? disclosure("Show more events", more) : ""}`)}
     ${past.length ? group("Past", disclosure("Show past events", past)) : ""}
   </div>
@@ -278,7 +276,7 @@ function aboutSection(home) {
   return `
 <section class="block about gutter" id="about" aria-labelledby="about-title">
   <div class="wrap">
-    ${sectionHead("about-title", home.about_eyebrow, home.about_title, home.about_text)}
+    ${sectionHead("about-title", home.about_eyebrow, home.about_title, home.about_text, "", home.about_emphasis)}
     ${aud ? `<ul class="aud">${aud}</ul>` : ""}
     ${join ? `<h3 class="join-title">${esc(home.join_title ?? "Get involved")}</h3><ul class="join">${join}</ul>` : ""}
   </div>

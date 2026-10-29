@@ -101,3 +101,7 @@ export function restFraming(P, points, W, H, fill = 0.62, most = 2.2) {
 }
 
 export const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export function emphasise(title, word) {
+  const index = word ? title.indexOf(word) : -1;
+  return index < 0 ? esc(title) : `${esc(title.slice(0, index))}<span class="hero-emphasis">${esc(word)}</span>${esc(title.slice(index + word.length))}`;
+}

@@ -1,6 +1,7 @@
 ---
 eyebrow: Why open silicon
-title: From sand to phone
+title: From sand to chip
+title_emphasis: chip
 intro: >
   Chip design and manufacturing can be expensive. Open tools let more people
   design chips. Sharing a manufacturing run can reduce the cost of making

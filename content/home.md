@@ -8,6 +8,7 @@ hero_lede: >
 
 events_eyebrow: Events
 events_title: What's on
+events_emphasis: on
 
 exhibition_title: In the Ether 3
 exhibition_dates: 3 October to 6 December 2026 · ArtScience Museum
@@ -27,6 +28,7 @@ exhibition_areas:
 
 about_eyebrow: About
 about_title: Making chips together
+about_emphasis: together
 about_text: >
   We started with chip design workshops for In the Ether 3, run with Tiny
   Tapeout. Our goal is to connect people who can share knowledge, teach, build

@@ -5,7 +5,7 @@
 // from the phone to the design desk: with an open design, anyone can check.
 // The hub's tile turns up from Design onwards: on the designer's screen, on
 // the mask, printed on the packages, and where the check lands.
-import { k, scene, r2, esc } from "../lib.mjs";
+import { k, scene, r2, esc, emphasise } from "../lib.mjs";
 import * as G from "../kit/lathe.mjs";
 import { tileBody } from "../mark.mjs";
 
@@ -493,7 +493,7 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
 <section class="fab iso" id="why" data-fab aria-labelledby="fab-title">
   <div class="fab-inner">
     <div class="fab-head">
-      <div><p class="eyebrow">${esc(copy.eyebrow)}</p><h2 id="fab-title">${esc(copy.title)}</h2></div>
+      <div><p class="eyebrow">${esc(copy.eyebrow)}</p><h2 id="fab-title">${emphasise(copy.title, copy.title_emphasis)}</h2></div>
       <p>${esc(copy.intro)}</p>
     </div>
     <div class="fab-stage" data-atmo="60">
