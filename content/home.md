@@ -19,9 +19,11 @@ exhibition_areas:
   - label: Open Chip Lab
     text: From circuit to silicon.
     href: "/ite3/#lab"
+    image: exhibits/binary.webp
   - label: d/acc
     text: Pro-human technological acceleration.
     href: "/ite3/#dacc"
+    image: exhibits/critter.webp
 
 about_eyebrow: About
 about_title: Making chips together

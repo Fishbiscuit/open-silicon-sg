@@ -26,6 +26,8 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, "..");
 const CONTENT = (p) => join(ROOT, "content", p);
 const OUT = (p) => join(ROOT, "out", p);
+const ASSET_ROOT = process.env.RELEASE_ASSET_ROOT ? join(process.env.RELEASE_ASSET_ROOT, "assets") : join(ROOT, "assets");
+const assetExists = (rel) => existsSync(join(ASSET_ROOT, rel));
 const UNIT = Math.sqrt(1.6);
 // Events sort into upcoming and past by the Singapore date of the build
 // (preview another day with BUILD_DATE=YYYY-MM-DD).
@@ -241,7 +243,7 @@ function eventsSection(home, events) {
 // Exhibit pictures come from assets/ and are embedded, so the page stays one file.
 const MIME = { webp: "image/webp", jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", svg: "image/svg+xml" };
 function assetUri(rel, where) {
-  const file = join(ROOT, "assets", rel);
+  const file = join(ASSET_ROOT, rel);
   if (!existsSync(file)) throw new ContentError(`${where}: image "${rel}" is not in assets/`);
   const type = MIME[rel.split(".").pop().toLowerCase()];
   if (!type) throw new ContentError(`${where}: image "${rel}" should be .webp, .jpg, .png or .svg`);
@@ -251,12 +253,12 @@ function assetUri(rel, where) {
 function exhibitionSection(home, exhibits) {
   if (home.exhibition_areas?.length) {
     const extra = home.exhibition_dates ? `<p class="s-meta">${esc(home.exhibition_dates)}${home.exhibition_link ? `<a class="ex-directions" href="${esc(home.exhibition_link)}">${esc(home.exhibition_link_label ?? "Getting there")} ↗</a>` : ""}</p>` : "";
-    const areas = home.exhibition_areas.map(a => `<a class="ex-area" href="${esc(a.href)}">${a.image ? `<span class="ex-area-image"><img src="${assetUri(a.image, "content/home.md")}" alt="" loading="lazy" decoding="async"></span>` : ""}<span class="ex-area-label"><span><b>${esc(a.label)}</b>${a.text ? `<small>${esc(a.text)}</small>` : ""}</span><span aria-hidden="true">→</span></span></a>`).join("");
+    const areas = home.exhibition_areas.map(a => `<a class="ex-area" href="${esc(a.href)}">${a.image && assetExists(a.image) ? `<span class="ex-area-image"><img src="${assetUri(a.image, "content/home.md")}" alt="" loading="lazy" decoding="async"></span>` : ""}<span class="ex-area-label"><span><b>${esc(a.label)}</b>${a.text ? `<small>${esc(a.text)}</small>` : ""}</span><span aria-hidden="true">→</span></span></a>`).join("");
     return `<section class="block exhibition gutter" id="exhibition" aria-labelledby="exhibition-title"><div class="wrap">${sectionHead("exhibition-title", "Exhibition", home.exhibition_title, home.exhibition_intro, extra)}<iframe class="ex-carousel" src="/ite3/?embed=carousel" title="${esc(home.exhibition_carousel_title ?? "Exhibition carousel")}" loading="lazy"></iframe><div class="ex-areas">${areas}</div><a class="ex-all" href="/ite3/#find">${esc(home.exhibition_all_label ?? "All exhibits")} <span aria-hidden="true">→</span></a></div></section>`;
   }
   const kinds = { chip: "Chip", device: "Device", material: "Material" };
   const card = ({ data: x, file }) => `<li class="ex" data-kind="${x.kind}">
-    ${x.image ? `<figure class="ex-img" data-fit="${x.image_fit ?? "contain"}"><img src="${assetUri(x.image, file)}" alt="${esc(x.image_alt ?? x.title)}" loading="lazy" decoding="async">${x.image_credit ? `<figcaption>${esc(x.image_credit)}</figcaption>` : ""}</figure>` : `<div class="ex-img ex-blank" aria-hidden="true"></div>`}
+    ${x.image && assetExists(x.image) ? `<figure class="ex-img" data-fit="${x.image_fit ?? "contain"}"><img src="${assetUri(x.image, file)}" alt="${esc(x.image_alt ?? x.title)}" loading="lazy" decoding="async">${x.image_credit ? `<figcaption>${esc(x.image_credit)}</figcaption>` : ""}</figure>` : `<div class="ex-img ex-blank" aria-hidden="true"></div>`}
     <div class="ex-body"><span class="ex-kind">${kinds[x.kind]}</span><h3>${esc(x.title)}</h3><p class="ex-makers">${esc(x.makers.join(", "))}</p>${x.invitation ? `<p class="ex-inv">${esc(x.invitation)}</p>` : ""}<p class="ex-sum">${inline(x.summary)}</p></div>
     <div class="ex-links">${x.companion ? `<a href="${esc(x.companion)}">In the companion</a>` : ""}${x.source_link ? `<a href="${esc(x.source_link)}" target="_blank" rel="noopener">Original<span aria-hidden="true"> ↗</span></a>` : ""}</div>
   </li>`;
@@ -314,7 +316,8 @@ function proposalSection(p, sections) {
 // ------------------------------------------------------------------ pages
 const font = (file, type) => `data:${type};base64,${readFileSync(join(ROOT, file)).toString("base64")}`;
 const ISO_CSS = k.ISO_CSS.replace(/\.iso\{[^}]*\}\s*\.iso\[data-theme="light"\]\{[^}]*\}/, ""); // tokens come from design/schemes.mjs
-const BASE_CSS = (options = {}) => `${schemeCss(options)}
+const BASE_CSS = (options = {}) => `${assetExists("ABC-Areal.woff2") ? `@font-face{font-family:"ABC Areal";src:url(data:font/woff2;base64,${readFileSync(join(ASSET_ROOT, "ABC-Areal.woff2")).toString("base64")}) format("woff2");font-weight:100 900;font-display:swap}` : ""}
+${schemeCss(options)}
 ${ISO_CSS}
 ${THEME_CSS}
 ${PAGE_CSS}`;
