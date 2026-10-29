@@ -424,7 +424,7 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
 
   const css = `
 .fab{position:relative;padding-block:80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-top:1px solid var(--rule);background:radial-gradient(70% 60% at 50% 40%,var(--stage-glow),transparent 75%),var(--bg)}
-.fab-inner{max-width:1500px;margin:0 auto}
+.fab-inner{max-width:1280px;margin:0 auto}
 .fab-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px 56px;align-items:end;margin-bottom:34px}
 .fab-head h2{font-family:var(--display);font-weight:500;font-size:clamp(32px,4.2vw,58px);line-height:1;color:var(--text-strong);margin:.35em 0 0;text-wrap:balance}
 .fab-head>p{margin:0;max-width:60ch;color:var(--text)}
