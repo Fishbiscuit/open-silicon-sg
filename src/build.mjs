@@ -277,7 +277,7 @@ function aboutSection(home) {
 <section class="block about gutter" id="about" aria-labelledby="about-title">
   <div class="wrap">
     ${sectionHead("about-title", home.about_eyebrow, home.about_title, home.about_text, "", home.about_emphasis)}
-    ${aud ? `<ul class="aud">${aud}</ul>` : ""}
+    ${aud ? `<div class="aud-network"><svg class="aud-traces" viewBox="0 0 200 280" preserveAspectRatio="none" aria-hidden="true"><path d="M0 52 H34 L83 123 M200 52 H166 L117 123 M0 228 H34 L83 157 M200 228 H166 L117 157"/><circle cx="0" cy="52" r="3"/><circle cx="200" cy="52" r="3"/><circle cx="0" cy="228" r="3"/><circle cx="200" cy="228" r="3"/></svg><span class="aud-hub" aria-hidden="true">${markSvg(C.site, 64)}</span><ul class="aud">${aud}</ul></div>` : ""}
     ${join ? `<h3 class="join-title">${esc(home.join_title ?? "Get involved")}</h3><ul class="join">${join}</ul>` : ""}
   </div>
 </section>`;
