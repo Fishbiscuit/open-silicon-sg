@@ -101,7 +101,10 @@ export function restFraming(P, points, W, H, fill = 0.62, most = 2.2) {
 }
 
 export const esc = (t) => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// Highlights the first whole-word match, so "on" never lights up inside "Long".
 export function emphasise(title, word) {
-  const index = word ? title.indexOf(word) : -1;
+  const letter = /[\p{L}\p{N}]/u;
+  let index = word ? title.indexOf(word) : -1;
+  while (index >= 0 && (letter.test(title[index - 1] ?? "") || letter.test(title[index + word.length] ?? ""))) index = title.indexOf(word, index + 1);
   return index < 0 ? esc(title) : `${esc(title.slice(0, index))}<span class="hero-emphasis">${esc(word)}</span>${esc(title.slice(index + word.length))}`;
 }

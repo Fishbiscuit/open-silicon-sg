@@ -30,6 +30,8 @@
   const OPEN_AT = BEAT * (DATA.beats.length - 1) + SEG.sch[1] + 0.6;
   const END_AT = OPEN_AT + OPEN_LEN;
   const TOTAL = END_AT + END_LEN;
+  // Each button covers its part of the sequence: one object, or the open chip through to the end card.
+  const starts = chips.map((c) => (c.dataset.jump === "open" ? OPEN_AT : Number(c.dataset.jump) * BEAT));
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const seg = (t, [a, b]) => clamp((t - a) / (b - a));
   const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
@@ -310,8 +312,9 @@
     if (t >= END_AT) drawEnd(t - END_AT, cssScale);
     else resetEnd();
     chips.forEach((c, j) => {
-      c.style.setProperty("--p", fx(clamp((t - j * BEAT) / (j === beats.length - 1 ? TOTAL - j * BEAT : BEAT))));
-      c.toggleAttribute("aria-current", j === i);
+      const a = starts[j], b = starts[j + 1] ?? TOTAL;
+      c.style.setProperty("--p", fx(clamp((t - a) / (b - a))));
+      c.toggleAttribute("aria-current", t >= a && (t < b || j === chips.length - 1));
     });
   }
 
@@ -335,7 +338,7 @@
 
   replay.addEventListener("click", () => { finale(false); t = 0; capIndex = ""; render(); setPlaying(true); });
   pauseBtn.addEventListener("click", () => { if (done) { replay.click(); return; } setPlaying(!playing); });
-  chips.forEach((c, j) => c.addEventListener("click", () => { finale(false); t = j * BEAT + 0.001; capIndex = ""; render(); setPlaying(true); }));
+  chips.forEach((c, j) => c.addEventListener("click", () => { finale(false); t = starts[j] + 0.001; capIndex = ""; render(); setPlaying(true); }));
   new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; run(); }, { threshold: 0.15 }).observe(stage);
   document.addEventListener("visibilitychange", () => { visible = !document.hidden; run(); });
 
