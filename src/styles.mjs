@@ -53,7 +53,8 @@ code{font:.88em var(--mono)}
 @keyframes rf{0%,100%{opacity:.08}35%{opacity:.85}70%{opacity:.08}}
 .rf-led{stroke-width:2.2px}
 .sheen{mix-blend-mode:var(--sheen-blend)}
-.sch{fill:none;stroke:var(--sch-line);stroke-width:1.5px;stroke-dasharray:1;stroke-dashoffset:1;stroke-linecap:round;stroke-linejoin:round}
+.iso-svg .sch{vector-effect:none} /* dashes drawn along a path break on a non-scaling stroke */
+.sch{fill:none;stroke:var(--sch-line);stroke-width:2px;stroke-dasharray:1;stroke-dashoffset:1;stroke-linecap:round;stroke-linejoin:round}
 .sch-n{fill:var(--sch-node);opacity:0}
 .sch-b{fill:none;stroke:var(--sch-line);stroke-width:1.5px;opacity:0}
 .sch-t{fill:var(--sch-line);font:600 20px var(--mono);opacity:0}
