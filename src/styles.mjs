@@ -39,7 +39,8 @@ code{font:.88em var(--mono)}
 @media (prefers-reduced-motion:reduce){.hero-emphasis{animation:none;background-size:100% 100%}}
 .lede{font-size:clamp(17px,1.45vw,20px);line-height:1.5;max-width:68ch;color:var(--text);margin:0 auto;text-wrap:balance}
 .hero-note{font:12px/1.4 var(--mono);color:var(--muted);margin-top:28px;letter-spacing:.04em}
-.stage-wrap{min-width:0;width:100%;max-width:960px;margin:0 auto}
+/* The stage, caption and controls fit one screen: about 232px goes to the header, caption and controls, and 1.40625 is the stage's 900/640 shape. */
+.stage-wrap{min-width:0;width:100%;max-width:960px;max-width:clamp(480px,(100vh - 232px) * 1.40625,960px);max-width:clamp(480px,(100svh - 232px) * 1.40625,960px);margin:0 auto}
 .stage{position:relative;aspect-ratio:900/640;width:100%;background:radial-gradient(55% 55% at 55% 52%,var(--stage-glow),transparent 72%);overflow:hidden}
 .hero .vignette,.hero .grain{display:none}
 .stage .layer{position:absolute;inset:0;opacity:0;visibility:hidden;will-change:opacity,transform}
@@ -237,7 +238,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   .aud-hub{top:0;left:0;transform:none;width:41px;height:41px;border:0;border-radius:0}
   .aud-hub .mark{width:41px;height:41px}
 }
-@media (max-width:520px){.end-name .sub{display:none}.site-head{position:static}.head-row{gap:0 10px;min-height:52px}.wordmark{font-size:15px;gap:8px}.wordmark .mark{width:34px;height:34px}.site-head .wordmark b{display:none}.schemes button{padding:4px 7px;font-size:11px}[id]{scroll-margin-top:12px}.chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;max-width:100%}.controls{align-items:stretch}.buttons{margin-left:auto}}
+@media (max-width:520px){.end-name .sub{display:none}.site-head{position:static}.head-row{gap:0 10px;min-height:52px}.wordmark{font-size:15px;gap:8px}.wordmark .mark{width:34px;height:34px}.site-head .wordmark b{display:none}.schemes button{padding:4px 7px;font-size:11px}[id]{scroll-margin-top:12px}.chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;max-width:100%}.chips .chip{flex:1 1 auto;padding:8px 8px 10px;font-size:12px}.controls{align-items:stretch}.buttons{margin-left:auto}}
 /* proposal */
 .guide{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);background:var(--bg-raised)}
 .guide-inner{max-width:1200px;margin:0 auto;padding-block:26px;display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px 32px;align-items:start}

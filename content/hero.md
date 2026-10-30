@@ -1,5 +1,6 @@
 ---
 open_title: An open chip · shared run
+open_label: Open chip
 open: >
   Many designs can share a chip. When a design is published, anyone can
   inspect its layers. Designers can sign their work in the metal.

@@ -44,7 +44,7 @@ const S = {
     exhibition_title: "string", exhibition_intro: "text?", exhibition_dates: "string?", exhibition_link: "url?", exhibition_link_label: "string?", exhibition_carousel_title: "string?", exhibition_all_label: "string?", exhibition_areas: "list?",
     about_eyebrow: "string?", about_title: "string", about_emphasis: "string?", about_text: "text", audiences: "list?", join_title: "string?", join: "list?",
   },
-  hero: { readout: "string?", open_title: "string?", open: "text?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
+  hero: { readout: "string?", open_title: "string?", open_label: "string?", open: "text?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
   fab: { eyebrow: "string", title: "string", title_emphasis: "string?", intro: "text", lead_note: "string?", readout: "string?", closing_label: "string", closing_title: "string", closing: "text", stations: "list" },
   proposal: { doc_label: "string", doc_date: "string", guide_title: "string", guide: "list", eyebrow: "string", title: "string", sub: "text", footer: "text" },
   section: { n: "string", id: "string", title: "string", claims: "list?", sitemap: "map?", timeline: "list?" },
@@ -190,6 +190,7 @@ function heroSection(home, hero, figs, site) {
       <div class="controls">
         <div class="chips" role="group" aria-label="Jump to an object">
           ${figs.map(({ o }, i) => `<button type="button" class="chip" data-jump="${i}"><span>${esc(o.label)}</span><i></i></button>`).join("")}
+          ${hero.open_label ? `<button type="button" class="chip" data-jump="open"><span>${esc(hero.open_label)}</span><i></i></button>` : ""}
         </div>
         <div class="buttons">
           <button type="button" class="btn" data-pause aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10"/></svg><span>Pause</span></button>
