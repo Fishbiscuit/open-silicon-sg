@@ -4,7 +4,7 @@ Source for [opensilicon.sg](https://opensilicon.sg/), Singapore’s open silicon
 
 ## Edit and preview
 
-Page content lives in `content/`, colours in `design/`, and rendering and animation code in `src/`. To build the public source locally with Node.js:
+Page content lives in `content/`, colours in `design/`, and rendering and animation code in `src/`. The editing guide is `content/README.md`. To build the public source locally with Node.js:
 
 ```sh
 node src/build.mjs
