@@ -10,7 +10,7 @@ stops with the file name and the problem if something is wrong.
 | Home page: headline, introduction, section titles, the exhibition's dates and area cards, who the hub is for | `home.md` |
 | Add or change a workshop or event | `events/` (copy `events/_template.md`) |
 | Opening sequence: captions for each object, the open chip, final line | `hero.md` |
-| "Why open silicon": intro and the nine steps | `fab.md` |
+| "Why open silicon": intro and the nine steps. Each step stays up longer the longer its text is. | `fab.md` |
 | Exhibit cards | `exhibits/` (copy `exhibits/_template.md`). These show only if `exhibition_areas` is removed from `home.md`; the page now shows the companion's carousel instead. |
 
 Rules of thumb:

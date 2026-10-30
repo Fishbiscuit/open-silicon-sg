@@ -496,10 +496,10 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
       <div><p class="eyebrow">${esc(copy.eyebrow)}</p><h2 id="fab-title">${emphasise(copy.title, copy.title_emphasis)}</h2></div>
       <p>${esc(copy.intro)}</p>
     </div>
-    <div class="fab-stage" data-atmo="60">
+    <div class="fab-stage">
       <div class="keylight" aria-hidden="true"></div>
       ${svg}
-      <canvas class="motes" aria-hidden="true"></canvas><div class="vignette" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>
+      <div class="vignette" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>
       <div class="fab-corners" aria-hidden="true"><span style="top:0;left:0;color:var(--text)" data-fab-fig>Fig 4 · step 1 of ${STATIONS.length}</span><span style="top:0;right:0;text-transform:uppercase;letter-spacing:.12em" data-fab-title>${esc(STATIONS[0].name)}</span>${copy.readout ? `<span style="bottom:0;right:0">${esc(copy.readout)}</span>` : ""}</div>
     </div>
     <div class="fab-cap"><b data-fab-n>01</b><strong data-fab-name>${esc(STATIONS[0].name)}</strong><p data-fab-fact>${esc(STATIONS[0].fact)}</p></div>
@@ -543,9 +543,11 @@ const FAB_JS = `
   const nEl = root.querySelector("[data-fab-n]"), nameEl = root.querySelector("[data-fab-name]"), factEl = root.querySelector("[data-fab-fact]");
   const figEl = root.querySelector("[data-fab-fig]"), titleEl = root.querySelector("[data-fab-title]");
   const pauseBtn = root.querySelector("[data-fab-pause]"), replay = root.querySelector("[data-fab-replay]");
+  const fabStage = root.querySelector(".fab-stage");
   const still = matchMedia("(prefers-reduced-motion: reduce)");
   const ST = D.steps, N = ST.length, DWELL = 3.4, LEAD = 6.6, MOVE = 1.2, OVER = 3.2, LOOP = 2.4;
-  const DUR = ST.map((s) => (s.m1 > s.m0 ? LEAD : DWELL));
+  // Each step stays up long enough to read its fact, about 200 words a minute after the camera settles.
+  const DUR = ST.map((s, i) => Math.max(s.m1 > s.m0 ? LEAD : DWELL, 0.6 + 0.3 * D.stations[i].fact.trim().split(" ").length));
   const T0 = DUR.map((_, i) => DUR.slice(0, i).reduce((a, b) => a + b, 0));
   const END = T0[N - 1] + DUR[N - 1];
   const TOTAL = END + OVER + LOOP;
@@ -634,6 +636,7 @@ const FAB_JS = `
   const run = () => { if (!frame && playing && visible) { last = 0; frame = requestAnimationFrame(tick); } };
   function setPlaying(on) {
     playing = on;
+    fabStage.classList.toggle("paused", !on);
     pauseBtn.setAttribute("aria-pressed", String(!on));
     pauseBtn.querySelector("span").textContent = on ? "Pause" : "Play";
     replay.classList.toggle("prime", !on && t >= TOTAL);
@@ -646,7 +649,7 @@ const FAB_JS = `
     visible = es[es.length - 1].isIntersecting;
     if (visible && !started && !still.matches) { started = true; setPlaying(true); }
     run();
-  }, { threshold: 0.35 }).observe(root.querySelector(".fab-stage"));
+  }, { threshold: 0.35 }).observe(fabStage);
   document.addEventListener("visibilitychange", () => { visible = !document.hidden && visible; run(); });
   window.__fab = { seek: (s) => { t = s; render(); }, pause: () => setPlaying(false), T0, END, TOTAL };
   if (still.matches) t = TOTAL;
