@@ -34,9 +34,10 @@ code{font:.88em var(--mono)}
 .hero-grid{position:relative;display:grid;grid-template-columns:1fr;gap:clamp(24px,3vw,44px);max-width:1280px;margin:0 auto}
 .hero-copy{min-width:0;text-align:center}
 .hero h1{font-family:var(--body);font-weight:600;font-size:clamp(43px,6vw,86px);line-height:1.03;letter-spacing:-.035em;color:var(--text-strong);max-width:18ch;margin:0 auto .3em;text-wrap:balance}
-.hero-emphasis{background-image:linear-gradient(transparent 60%,color-mix(in srgb,var(--accent) 22%,transparent) 60%);background-repeat:no-repeat;background-position:left bottom;background-size:0 100%;animation:highlight-word 1.1s var(--ease) .35s forwards}
+.hero-emphasis{background-image:linear-gradient(transparent 60%,color-mix(in srgb,var(--accent) 22%,transparent) 60%);background-repeat:no-repeat;background-position:left bottom;background-size:0 100%}
+.hero-emphasis.seen{animation:highlight-word 1.1s var(--ease) .35s forwards}
 @keyframes highlight-word{to{background-size:100% 100%}}
-@media (prefers-reduced-motion:reduce){.hero-emphasis{animation:none;background-size:100% 100%}}
+@media (scripting:none),(prefers-reduced-motion:reduce){.hero-emphasis,.hero-emphasis.seen{animation:none;background-size:100% 100%}}
 .lede{font-size:clamp(17px,1.45vw,20px);line-height:1.5;max-width:68ch;color:var(--text);margin:0 auto;text-wrap:balance}
 .hero-note{font:12px/1.4 var(--mono);color:var(--muted);margin-top:28px;letter-spacing:.04em}
 /* The stage, caption and controls fit one screen: about 232px goes to the header, caption and controls, and 1.40625 is the stage's 900/640 shape. */
@@ -122,6 +123,7 @@ code{font:.88em var(--mono)}
 .caption.on{filter:none}
 .caption{transition:opacity .55s var(--ease),transform .55s var(--ease),filter .55s var(--ease)}
 @media (prefers-reduced-motion:reduce){.keylight,.grain,.layer.lit .chip-glow{animation:none}.caption{filter:none}}
+.paused,.paused *{animation-play-state:paused!important}
 /* events (generated from content/events) */
 .ev-group{display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px 32px;border-top:1px solid var(--rule);padding-block:18px}
 .ev-group>h3{font:500 12px/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}

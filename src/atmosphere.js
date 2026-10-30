@@ -64,7 +64,7 @@
     function tick(now) {
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
       last = now;
-      t += dt;
+      if (!stage.classList.contains("paused")) t += dt;
       if (Math.floor(t * 2) !== Math.floor((t - dt) * 2)) retint();
       draw();
       frame = visible && !still.matches ? requestAnimationFrame(tick) : 0;

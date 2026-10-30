@@ -375,5 +375,6 @@ ${aboutSection(C.home)}
 ${siteFooter(C.site)}
 <script type="module">${readFileSync(join(HERE, "hero.js"), "utf8")}
 ${fab.js}
-${readFileSync(join(HERE, "atmosphere.js"), "utf8")}</script>`);
+${readFileSync(join(HERE, "atmosphere.js"), "utf8")}
+${readFileSync(join(HERE, "highlight.js"), "utf8")}</script>`);
 
