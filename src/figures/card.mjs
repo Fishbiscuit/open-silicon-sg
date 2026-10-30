@@ -69,11 +69,15 @@ export function cardScene({ W = 900, H = 640 } = {}) {
   const turns = [];
   for (let i = 0; i < 5; i++) turns.push(k.planOutline(k.insetPlan(CARD, 5 + i * 3), IZ + 1.2, P, 8));
   inlay.push(L(turns.join(""), { className: "cu" }));
+  // Current from the reader's field: round each turn, along the leads, up into the chip.
+  const flow = (d, from, to) => `<path class="flow" data-at="${from} ${to}" pathLength="1" d="${d}"/>`;
+  turns.forEach((d, i) => inlay.push(flow(d, i * 0.05, 0.75 + i * 0.05)));
   const outerLead = [CARD.x + CARD.w - 5, MOD[1]];
   const innerLead = [CARD.x + CARD.w - 5 - 4 * 3, MOD[1] + 4];
   inlay.push(L(k.onTop([outerLead, [MOD[0] + 9, MOD[1]]], IZ + 1.2, P), { className: "cu" }));
   inlay.push(L(k.onTop([innerLead, [MOD[0] + 9, MOD[1] + 4]], IZ + 1.2, P), { className: "cu" }));
   inlay.push(D([at([MOD[0] + 9, MOD[1], IZ + 1.2]), at([MOD[0] + 9, MOD[1] + 4, IZ + 1.2])], { size: 0.9, tone: "hi" }));
+  inlay.push(flow(k.onTop([outerLead, [MOD[0] + 9, MOD[1]]], IZ + 1.2, P), 0.75, 0.95));
 
   // Module: a gold lead frame, the die, two bond wires, a glob of epoxy.
   const MZ = IZ;
@@ -83,6 +87,8 @@ export function cardScene({ W = 900, H = 640 } = {}) {
   const die = { x: MOD[0] - 2.6, y: MOD[1] - 2.6, w: 5.2, d: 5.2, r: 0.3 };
   module.push(box(die, MZ + 0.7, 0.9, { mat: "die", tone: "hi", lit: true }, 2));
   module.push(L(arch([die.x + 0.6, MOD[1], MZ + 1.6], [MOD[0] - 5.4, MOD[1] - 0.6, MZ + 0.7], 1) + arch([die.x + die.w - 0.6, MOD[1], MZ + 1.6], [MOD[0] + 5.4, MOD[1] + 0.6, MZ + 0.7], 1), { className: "au" }));
+  // the module sits one lift above the inlay, so this crosses the gap between them
+  module.push(flow(k.pathOf([at([MOD[0] + 9, MOD[1], IZ + 1.2 - (LIFT.module - LIFT.inlay)]), at([MOD[0] + 9, MOD[1], MZ + 0.7]), at([die.x + die.w, MOD[1], MZ + 1.6])]), 0.95, 1.15));
   const cap = [box({ x: MOD[0] - 6.7, y: MOD[1] - 5.2, w: 13.4, d: 10.4, r: 3 }, MZ + 0.7, 2.6, { mat: "epoxy", tone: "mid" }, 6, 0.5)];
 
   const FZ = IZ + 1.2;
@@ -131,6 +137,7 @@ export function cardScene({ W = 900, H = 640 } = {}) {
     focus: [r2(fx), r2(fy)],
     zoom: 9,
     chipW: die.w,
+    tap: k.axisVector(P, [0, 0, -12]).map(r2),
     label:
       "A contactless transit card hovering over a reader pad. It comes apart into its printed sheets, an inlay carrying five turns of copper antenna, and a tiny module where one chip sits on a gold lead frame under a drop of epoxy.",
     body: body.join(""),

@@ -394,7 +394,7 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
   // The loop back: from the phone to the design desk, over the line.
   const from = at([XS[12], MY - 10, 60]);
   const to = at([XS[5], MY, 205]);
-  const mid = [(from[0] + to[0]) / 2, Math.min(from[1], to[1]) - 260];
+  const mid = [(from[0] + to[0]) / 2, Math.min(from[1], to[1]) - 130];
 
   const stationSvg = M.map((m, i) => `<g class="station" data-st="${i}">${m.back}</g>`).join("");
   const frontSvg = M.map((m, i) => `<g class="station-f" data-st="${i}">${m.front}</g>`).join("");
@@ -405,9 +405,16 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
   const ext = [at([X0, -150, -96]), at([X1, 150, 0]), at([X0, -150, 0]), at([X1, -150, 240]), at([XS[0], 150, -96]), [mid[0], mid[1]]];
   const xs = ext.map((p) => p[0]), ys = ext.map((p) => p[1]);
   const over = { c: [r2((Math.min(...xs) + Math.max(...xs)) / 2), r2((Math.min(...ys) + Math.max(...ys)) / 2)], s: r2(Math.min(W / (Math.max(...xs) - Math.min(...xs)), H / (Math.max(...ys) - Math.min(...ys))) * 0.94) };
-  // The check lands on the tile, sized to read in the overview.
-  const ts = 30 / over.s;
-  const loop = `<path class="verify" pathLength="1" d="M${r2(from[0])} ${r2(from[1])}Q${r2(mid[0])} ${r2(mid[1])} ${r2(to[0])} ${r2(to[1])}"/><g class="fab-tile verify-end" transform="translate(${r2(to[0] - ts / 2)} ${r2(to[1] - ts / 2)}) scale(${r2(ts / 40)})">${tileBody(site)}</g>`;
+  // Then the camera leans in from Design to Use, for the comparison.
+  const near = [at([XS[5] - 60, -150, 0]), at([X1, 150, 0]), at([X1, -150, 60]), [mid[0], (mid[1] + Math.min(from[1], to[1])) / 2 - 90], [to[0] - 70, to[1] - 40]];
+  const nx = near.map((q) => q[0]), ny = near.map((q) => q[1]);
+  const close = { c: [r2((Math.min(...nx) + Math.max(...nx)) / 2), r2((Math.min(...ny) + Math.max(...ny)) / 2)], s: r2(Math.min(W / (Math.max(...nx) - Math.min(...nx)), H / (Math.max(...ny) - Math.min(...ny))) * 0.94) };
+  // The drawing on the designer's side, the die on the phone's, and a tick when they match.
+  const ts = 78 / close.s;
+  const apex = [(from[0] + 2 * mid[0] + to[0]) / 4, (from[1] + 2 * mid[1] + to[1]) / 4];
+  const tick = 15 / close.s;
+  const compare = `<g class="fab-tile on-screen verify-end" data-at="0.04" transform="translate(${r2(to[0] - ts / 2)} ${r2(to[1] - ts / 2)}) scale(${r2(ts / 40)})">${tileBody(site)}</g><g class="fab-tile on-die verify-end" data-at="0.04" transform="translate(${r2(from[0] - ts / 2)} ${r2(from[1] - ts / 2)}) scale(${r2(ts / 40)})">${tileBody(site)}</g><g class="verify-tick verify-end" data-at="0.97" transform="translate(${r2(apex[0])} ${r2(apex[1])}) scale(${r2(tick / 15)})"><circle r="15"/><path d="M-7 0l5 5 9-10"/></g>`;
+  const loop = `<path class="verify" pathLength="1" d="M${r2(from[0])} ${r2(from[1])}Q${r2(mid[0])} ${r2(mid[1])} ${r2(to[0])} ${r2(to[1])}"/>${compare}`;
   // Wide view of the five plant machines for the opening run.
   const leadPts = [at([XS[0] - 170, -150, -96]), at([XS[4] + 210, 150, 0]), at([XS[3], MY, 240])];
   const lx = leadPts.map((q) => q[0]), ly = leadPts.map((q) => q[1]);
@@ -452,8 +459,10 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
 .fab .ped{opacity:0;transition:opacity .8s var(--ease)}
 .fab .ped.on{opacity:1}
 .fab .load{transition:opacity .5s var(--ease)}
-.fab .verify{fill:none;stroke:var(--accent);stroke-width:1.6px;stroke-dasharray:.012 .012;opacity:0}
+.fab .verify{fill:none;stroke:var(--accent);stroke-width:4.5px;stroke-linecap:round;stroke-dasharray:0 1;opacity:0;vector-effect:none}
 .fab .verify-end{opacity:0;transition:opacity .6s var(--ease)}
+.verify-tick circle{fill:var(--accent);vector-effect:none}
+.verify-tick path{fill:none;stroke:var(--bg);stroke-width:3.5px;stroke-linecap:round;stroke-linejoin:round;vector-effect:none}
 .fab-tile .frame{stroke-width:1px;vector-effect:non-scaling-stroke}
 .fab-tile .g{font:500 6.6px var(--display);letter-spacing:.02em}
 .fab-tile.on-screen .frame{fill:var(--lay-bg);stroke:var(--lay-metal)}
@@ -466,6 +475,10 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
 .fab-tile.verify-end .frame{fill:var(--stage);stroke:var(--text-strong)}
 .fab-tile.verify-end .cells rect{fill:var(--text-strong)}
 .fab-tile.verify-end .g{fill:var(--accent)}
+.fab-tile.verify-end.on-screen .frame{fill:var(--lay-bg);stroke:var(--lay-poly)}
+.fab-tile.verify-end.on-screen .cells rect,.fab-tile.verify-end.on-screen .g{fill:var(--lay-poly)}
+.fab-tile.verify-end.on-die .frame{fill:var(--sch-line);stroke:var(--sch-line)}
+.fab-tile.verify-end.on-die .cells rect,.fab-tile.verify-end.on-die .g{fill:var(--l-silver)}
 .fab .ok-dots circle{fill:var(--accent)}
 .fab-corners{position:absolute;inset:14px 16px;pointer-events:none;font:11px/1 var(--mono);letter-spacing:.06em;color:var(--muted)}
 .fab-corners>span{position:absolute;white-space:nowrap}
@@ -511,7 +524,7 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
       <button type="button" class="btn" data-fab-replay><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8a4.8 4.8 0 1 0 1.4-3.4M3 2.6v2.6h2.6"/></svg><span>Replay</span></button>
     </div>
   </div>
-  <script type="application/json" id="fab-data">${JSON.stringify({ W, H, anchors, xs: XS, over, lead, steps: STEPS, stations: STATIONS, closing: copy.closing, closingLabel: copy.closing_label, closingTitle: copy.closing_title }).replace(/</g, "\\u003c")}</script>
+  <script type="application/json" id="fab-data">${JSON.stringify({ W, H, anchors, xs: XS, over, close, lead, steps: STEPS, stations: STATIONS, closing: copy.closing, closingLabel: copy.closing_label, closingTitle: copy.closing_title }).replace(/</g, "\\u003c")}</script>
 </section>`;
   return { css, html, js: FAB_JS };
 }
@@ -538,7 +551,7 @@ const FAB_JS = `
   const peds = [...svg.querySelectorAll(".ped")];
   const fxs = [...svg.querySelectorAll("[data-fx]")];
   const web = svg.querySelector(".web"), blade = svg.querySelector(".blade");
-  const verify = svg.querySelector(".verify"), verifyEnd = svg.querySelector(".verify-end");
+  const verify = svg.querySelector(".verify"), verifyEnd = svg.querySelectorAll(".verify-end");
   const steps = [...root.querySelectorAll("[data-step]")];
   const nEl = root.querySelector("[data-fab-n]"), nameEl = root.querySelector("[data-fab-name]"), factEl = root.querySelector("[data-fab-fact]");
   const figEl = root.querySelector("[data-fab-fig]"), titleEl = root.querySelector("[data-fab-title]");
@@ -620,10 +633,11 @@ const FAB_JS = `
     if (t > END) { const lastA = D.anchors[ST[N - 1].m0]; p = [lerp(lastA[0], D.over.c[0], o), lerp(lastA[1], D.over.c[1], o)]; s = lerpLog(BASE, OVERS, o); }
     cam.setAttribute("transform", "translate(" + f3(C[0] - s * p[0]) + " " + f3(C[1] - s * p[1]) + ") scale(" + f3(s) + ")");
     const lp = ease(clamp((t - END - OVER * 0.7) / LOOP));
+    if (lp > 0) { const nearS = D.close.s * (narrow ? Math.min(1, box.width / box.height / (D.W / D.H)) : 1); p = [lerp(p[0], D.close.c[0], lp), lerp(p[1], D.close.c[1], lp)]; s = lerpLog(s, nearS, lp); cam.setAttribute("transform", "translate(" + f3(C[0] - s * p[0]) + " " + f3(C[1] - s * p[1]) + ") scale(" + f3(s) + ")"); }
     verify.style.opacity = lp > 0 ? 1 : 0;
     verify.style.strokeDashoffset = f3(1 - lp);
     verify.style.strokeDasharray = lp > 0 ? (f3(lp) + " 1") : "0 1";
-    verifyEnd.style.opacity = lp > 0.98 ? 1 : 0;
+    verifyEnd.forEach((el) => (el.style.opacity = lp >= Number(el.dataset.at) ? 1 : 0));
     text(t > END + OVER * 0.5 ? N : i);
     steps.forEach((b, j) => { b.style.setProperty("--p", f3(clamp((t - T0[j]) / DUR[j]))); b.toggleAttribute("aria-current", j === i && t < END); });
   }

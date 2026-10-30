@@ -326,68 +326,124 @@ function cellLayout(type, sites) {
 }
 
 function schematic(type, ox, oy, cell) {
-  // Drawn over the cell it describes. Lines get pathLength=1 so the runtime
-  // can draw them on.
+  // Drawn over the cell it describes. Lines get pathLength=1 so the runtime can
+  // draw them on. Paths marked data-on are what it lights when the circuit runs:
+  // plum for a 1, heavy ink for a way through to ground.
   const p = [];
-  const g = cell.pins.gates;
   const line = (d, extra = "") => p.push(`<path class="sch" pathLength="1" d="${d}"${extra}/>`);
   const label = (x, y, t, anchor = "middle") => p.push(`<text class="sch-t" x="${r2(x)}" y="${r2(y)}" text-anchor="${anchor}">${t}</text>`);
   const node = (x, y) => p.push(`<circle class="sch-n" cx="${r2(x)}" cy="${r2(y)}" r="5.5"/>`);
-  const fet = (x, y, pmos) => {
-    // channel, gate plate, and the source/drain stubs
-    line(`M${x + 9} ${y - 26}V${y + 26}M${x - 1} ${y - 20}V${y + 20}M${x + 9} ${y - 26}H${x + 30}M${x + 9} ${y + 26}H${x + 30}`);
-    if (pmos) p.push(`<circle class="sch-b" cx="${x - 9}" cy="${y}" r="7"/>`);
-    line(`M${pmos ? x - 16 : x - 1} ${y}H${x - 36}`);
+  const run = (on, d, ground) => p.push(`<path class="flip${ground ? " flip-down" : ""}" data-on="${on}" pathLength="1" d="${d}"/>`);
+  const bit = (cx, cy, key, show = "") => p.push(`<g class="bit" data-bit="${key}"${show ? ` data-show="${show}"` : ""} transform="translate(${r2(cx)} ${r2(cy)})"><g class="bit-face">${[1, 0].map((v) => `<g class="bit-${v}"><rect x="-22" y="-22" width="44" height="44" rx="5"/><text y="10">${v}</text></g>`).join("")}</g></g>`);
+  const fet = (x, y, pmos, dir = 1) => {
+    // channel, gate plate, and the source/drain stubs; dir -1 mirrors it
+    const at = (v) => x + dir * v;
+    line(`M${at(9)} ${y - 26}V${y + 26}M${at(-1)} ${y - 20}V${y + 20}M${at(9)} ${y - 26}H${at(30)}M${at(9)} ${y + 26}H${at(30)}`);
+    if (pmos) p.push(`<circle class="sch-b" cx="${at(-9)}" cy="${y}" r="7"/>`);
+    line(`M${at(pmos ? -16 : -1)} ${y}H${at(-36)}`);
   };
   const X = (v) => ox + v;
   const Y = (v) => oy + v;
-  if (type === "inv" || type === "nand2" || type === "sram") {
-    const pY = Y(69), nY = Y(206);
-    const gates = type === "nand2" ? [g[0], g[1]] : type === "sram" ? [g[0], g[1]] : [g[0]];
-    gates.forEach((gx, i) => {
-      fet(X(gx), pY, true);
-      fet(X(gx), nY, false);
-      // gate line joining the pair, the input
-      line(`M${X(gx) - 36} ${pY}V${nY}`);
-      node(X(gx) - 36, Y(137 + i * 14));
-      if (type !== "sram") label(X(gx) - 52, Y(137 + i * 14) + 4, i ? "B" : "A", "end");
-    });
-    if (type === "sram") {
-      line(`M${X(g[0]) + 30} ${pY + 26}V${nY - 26}M${X(g[1]) + 30} ${pY + 26}V${nY - 26}`);
-      line(`M${X(g[0]) + 30} ${Y(120)}H${X(g[1]) - 36}M${X(g[1]) + 30} ${Y(150)}H${X(g[0]) - 36}`);
-      node(X(g[0]) + 30, Y(120)); node(X(g[1]) + 30, Y(150));
-      fet(X(cell.w * 0.08), Y(137), false);
-      fet(X(cell.w * 0.92) - 40, Y(137), false);
-      label(X(0) - 8, Y(141), "BL", "end");
-      label(X(cell.w) + 8, Y(141), "BL̅", "start");
-      label(X(cell.w / 2), Y(296), "WL");
-    } else {
-      // Output: drains to the output node.
-      const last = gates[gates.length - 1];
-      line(`M${X(last) + 30} ${pY + 26}V${nY - 26}M${X(last) + 30} ${Y(137)}H${X(cell.w) + 34}`);
-      node(X(last) + 30, Y(137));
-      label(X(cell.w) + 44, Y(141), "Y", "start");
-      if (type === "inv") {
-        // The rails, and the paths the runtime lights: in from A, down from power, out to ground.
-        const x = X(last), mid = Y(137), railUp = Y(0), railDown = Y(ROW);
-        line(`M${x + 30} ${railUp}V${pY - 26}M${x + 30} ${nY + 26}V${railDown}`);
-        const flip = (name, d) => p.push(`<path class="flip ${name}" pathLength="1" d="${d}"/>`);
-        flip("flip-in", `M${x - 36} ${mid}V${pY}H${x - 16}`);
-        flip("flip-in", `M${x - 36} ${mid}V${nY}H${x - 1}`);
-        flip("flip-up", `M${x + 30} ${railUp}V${pY - 26}H${x + 9}V${pY + 26}H${x + 30}V${mid}H${X(cell.w) + 34}`);
-        flip("flip-down", `M${x + 30} ${mid}V${nY - 26}H${x + 9}V${nY + 26}H${x + 30}V${railDown}`);
-        const bit = (cx, name) => p.push(`<g class="bit" data-bit="${name}" transform="translate(${r2(cx)} ${mid})"><g class="bit-face">${[1, 0].map((v) => `<g class="bit-${v}"><rect x="-22" y="-22" width="44" height="44" rx="5"/><text y="10">${v}</text></g>`).join("")}</g></g>`);
-        bit(x - 98, "a");
-        bit(X(cell.w) + 90, "y");
-      }
-      if (type === "nand2") {
-        // PMOS in parallel (both drains to Y), NMOS in series.
-        line(`M${X(g[0]) + 30} ${pY + 26}V${Y(112)}H${X(last) + 30}`);
-        line(`M${X(g[0]) + 30} ${nY - 26}V${nY - 40}H${X(g[1]) + 30}`);
-      }
-    }
+  const hopR = (x) => `H${x - 7}a7 7 0 0 1 14 0`; // a wire stepping over another, heading right
+  const hopL = (x) => `H${x + 7}a7 7 0 0 0 -14 0`; // the same, heading left
+  const pY = Y(69), nY = Y(206), mid = Y(137), railUp = Y(0), railDown = Y(ROW), right = X(cell.w) + 34;
+  if (type === "inv") {
+    const x = X(cell.pins.gates[0]), input = x - 36, drain = x + 30;
+    fet(x, pY, true);
+    fet(x, nY, false);
+    line(`M${input} ${pY}V${nY}`);
+    line(`M${drain} ${pY + 26}V${nY - 26}M${drain} ${mid}H${right}`);
+    line(`M${drain} ${railUp}V${pY - 26}M${drain} ${nY + 26}V${railDown}`);
+    node(input, mid);
+    node(drain, mid);
+    label(input - 16, mid + 4, "A", "end");
+    label(right + 10, mid + 4, "Y", "start");
     label(X(-14), Y(-16), "VPWR", "end");
     label(X(-14), Y(ROW + 26), "VGND", "end");
+    run("a", `M${input} ${mid}V${pY}H${x - 16}`);
+    run("a", `M${input} ${mid}V${nY}H${x - 1}`);
+    run("y", `M${drain} ${railUp}V${pY - 26}H${x + 9}V${pY + 26}H${drain}V${mid}H${right}`);
+    run("down", `M${drain} ${mid}V${nY - 26}H${x + 9}V${nY + 26}H${drain}V${railDown}`, true);
+    bit(input - 62, mid, "a");
+    bit(right + 56, mid, "y");
+  } else if (type === "nand2") {
+    // Two upper transistors side by side, two lower in a stack: a way to ground needs both.
+    const xa = X(57), xb = X(133), top = Y(62), n1 = Y(146), n2 = Y(204), yy = Y(112);
+    const inA = xa - 36, inB = xb - 36, dA = xa + 30, dB = xb + 30;
+    fet(xa, top, true);
+    fet(xb, top, true);
+    fet(xb, n1, false);
+    fet(xb, n2, false);
+    line(`M${dA} ${railUp}V${top - 26}M${dB} ${railUp}V${top - 26}`);
+    line(`M${dA} ${top + 26}V${yy}${hopR(inB)}H${dB}`);
+    line(`M${dB} ${top + 26}V${n1 - 26}M${dB} ${n1 + 26}V${n2 - 26}M${dB} ${n2 + 26}V${railDown}`);
+    line(`M${inA} ${top}V${n2}H${inB}`);
+    line(`M${inB} ${top}V${n1}`);
+    line(`M${dB} ${yy}H${right}`);
+    node(inA, mid);
+    node(inB, mid);
+    node(dB, yy);
+    label(inA - 16, mid + 4, "A", "end");
+    label(inA + 41, mid - 30, "B");
+    label(right + 10, yy + 4, "Y", "start");
+    label(X(-14), Y(-16), "VPWR", "end");
+    label(X(-14), Y(ROW + 26), "VGND", "end");
+    run("a", `M${inA} ${mid}V${top}H${xa - 16}`);
+    run("a", `M${inA} ${mid}V${n2}H${xb - 1}`);
+    run("b", `M${inB} ${mid}V${top}H${xb - 16}`);
+    run("b", `M${inB} ${mid}V${n1}H${xb - 1}`);
+    run("pa", `M${dA} ${railUp}V${top - 26}H${xa + 9}V${top + 26}H${dA}V${yy}${hopR(inB)}H${dB}`);
+    run("pb", `M${dB} ${railUp}V${top - 26}H${xb + 9}V${top + 26}H${dB}V${yy}`);
+    run("y", `M${dB} ${yy}H${right}`);
+    run("down", `M${dB} ${yy}V${n1 - 26}H${xb + 9}V${n1 + 26}H${dB}V${n2 - 26}H${xb + 9}V${n2 + 26}H${dB}V${railDown}`, true);
+    bit(inA - 62, mid, "a");
+    bit(inA + 41, mid, "b");
+    bit(right + 56, yy, "y");
+  } else if (type === "sram") {
+    // Two inverters, each feeding the other, and a gate on either side to reach them.
+    const xL = X(76), xR = X(200), qx = X(46), nx = X(230), gL = X(112), gR = X(164), qy = Y(120), ny = Y(156);
+    const wl = Y(292), bl = X(-52), blb = X(328);
+    fet(xL, pY, true, -1);
+    fet(xL, nY, false, -1);
+    fet(xR, pY, true);
+    fet(xR, nY, false);
+    line(`M${qx} ${railUp}V${pY - 26}M${nx} ${railUp}V${pY - 26}M${qx} ${nY + 26}V${railDown}M${nx} ${nY + 26}V${railDown}`);
+    line(`M${qx} ${pY + 26}V${nY - 26}M${nx} ${pY + 26}V${nY - 26}`);
+    line(`M${gL} ${pY}V${nY}M${gR} ${pY}V${nY}`);
+    line(`M${qx} ${qy}${hopR(gL)}H${gR}`);
+    line(`M${nx} ${ny}${hopL(gR)}H${gL}`);
+    const leftPass = `M${bl} ${qy}H${X(-20)}V${qy + 9}H${X(20)}V${qy}H${qx}`;
+    const rightPass = `M${nx} ${ny}H${X(256)}V${ny + 9}H${X(296)}V${ny}H${blb}`;
+    line(leftPass);
+    line(rightPass);
+    line(`M${X(-16)} ${qy + 19}H${X(16)}M${X(260)} ${ny + 19}H${X(292)}`);
+    line(`M${X(0)} ${qy + 19}V${wl}H${X(276)}V${ny + 19}`);
+    line(`M${bl} ${Y(-20)}V${Y(284)}M${blb} ${Y(-20)}V${Y(284)}`);
+    [[qx, qy], [nx, ny], [gR, qy], [gL, ny]].forEach(([x, y]) => node(x, y));
+    label(X(138), Y(-14), "VPWR");
+    label(X(138), Y(258), "VGND");
+    label(X(206), wl + 26, "WL");
+    label(bl - 12, Y(16), "BL", "end");
+    label(blb + 12, Y(16), "BL̅", "start");
+    run("q", `M${qx} ${railUp}V${pY - 26}H${X(67)}V${pY + 26}H${qx}V${qy}`);
+    run("nq", `M${nx} ${railUp}V${pY - 26}H${X(209)}V${pY + 26}H${nx}V${ny}`);
+    run("nq", `M${qx} ${qy}V${nY - 26}H${X(67)}V${nY + 26}H${qx}V${railDown}`, true);
+    run("q", `M${nx} ${ny}V${nY - 26}H${X(209)}V${nY + 26}H${nx}V${railDown}`, true);
+    run("q", `M${qx} ${qy}${hopR(gL)}H${gR}`);
+    run("q", `M${gR} ${qy}V${pY}H${xR - 16}`);
+    run("q", `M${gR} ${qy}V${nY}H${xR - 1}`);
+    run("nq", `M${nx} ${ny}${hopL(gR)}H${gL}`);
+    run("nq", `M${gL} ${ny}V${pY}H${xL + 16}`);
+    run("nq", `M${gL} ${ny}V${nY}H${xL + 1}`);
+    run("wl", `M${X(138)} ${wl}H${X(0)}V${qy + 19}`);
+    run("wl", `M${X(138)} ${wl}H${X(276)}V${ny + 19}`);
+    run("bl", `M${bl} ${Y(-20)}V${Y(284)}`);
+    run("bl", `M${blb} ${Y(-20)}V${Y(284)}`, true);
+    run("acc", leftPass);
+    run("acc", rightPass, true);
+    bit(X(138), Y(88), "q");
+    bit(bl, Y(56), "one", "drive");
+    bit(blb, Y(56), "zero", "drive");
   }
   return `<g class="schematic">${p.join("")}</g>`;
 }
@@ -459,7 +515,7 @@ export function cellScene(spec, { W = 900, H = 640 } = {}) {
     focus: [r2(fcx), r2(fcy)],
     zoom: r2(closeScale),
     umPerUnit: 0.01,
-    flip: spec.cell === "inv",
+    flip: spec.cell,
     body: `<g class="cells">${rows3}</g><rect class="cell-halo" x="${f.x - 6}" y="${fy - 30}" width="${f.w + 12}" height="${ROW + 60}" fill="none" stroke="var(--lay-poly)" stroke-width="1.4"/>${sch}`,
     label: spec.cellLabel,
   };

@@ -53,14 +53,17 @@ code{font:.88em var(--mono)}
 @keyframes rf{0%,100%{opacity:.08}35%{opacity:.85}70%{opacity:.08}}
 .rf-led{stroke-width:2.2px}
 .sheen{mix-blend-mode:var(--sheen-blend)}
-.iso-svg .sch,.iso-svg .flip{vector-effect:none} /* dashes drawn along a path break on a non-scaling stroke */
+.iso-svg .sch,.iso-svg .flip,.iso-svg .flow{vector-effect:none} /* dashes drawn along a path break on a non-scaling stroke */
 .sch{fill:none;stroke:var(--sch-line);stroke-width:2px;stroke-dasharray:1;stroke-dashoffset:1;stroke-linecap:round;stroke-linejoin:round}
 .sch-n{fill:var(--sch-node);opacity:0}
 .sch-b{fill:none;stroke:var(--sch-line);stroke-width:1.5px;opacity:0}
 .sch-t{fill:var(--sch-line);font:600 20px var(--mono);opacity:0}
 .flip{fill:none;stroke-width:4px;stroke-dasharray:1;stroke-dashoffset:1;stroke-linecap:round;stroke-linejoin:round}
-.flip-in,.flip-up{stroke:var(--accent)}
+.flip{stroke:var(--accent)}
 .flip-down{stroke:var(--sch-line)}
+.flow{fill:none;stroke:var(--accent);stroke-width:1.5px;stroke-dasharray:1;stroke-dashoffset:1;stroke-linecap:round;stroke-linejoin:round}
+.ck-heat{fill:var(--fx-warm);opacity:0;mix-blend-mode:var(--fx-blend)}
+.field{opacity:0}
 .bit{opacity:0}
 .bit text{font:600 30px var(--mono);text-anchor:middle}
 .bit-1 rect{fill:var(--accent)}
@@ -68,7 +71,7 @@ code{font:.88em var(--mono)}
 .bit-0 rect{fill:var(--bg);stroke:var(--sch-line);stroke-width:1.5px}
 .bit-0 text{fill:var(--sch-line)}
 .cell-halo{opacity:0;filter:drop-shadow(0 0 5px var(--anatomy-lit))}
-.corners,.fab-corners{position:absolute;inset:14px 16px;pointer-events:none;font:11px/1 var(--mono);letter-spacing:.06em;color:var(--muted)}
+.corners,.fab-corners{position:absolute;inset:14px 16px;pointer-events:none;font:11px/1 var(--mono);letter-spacing:.06em;color:var(--muted);text-shadow:0 0 2px var(--bg),0 0 6px var(--bg),0 0 10px var(--bg)}
 .corners>[data-corner]{position:absolute;white-space:nowrap}
 [data-corner="fig"]{display:none}
 [data-corner="title"]{top:0;right:0;text-transform:uppercase;letter-spacing:.12em}
@@ -220,7 +223,13 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .aud p{margin:0}
 .aud-traces{position:absolute;top:0;bottom:0;left:50%;width:200px;height:100%;transform:translateX(-50%);overflow:visible;pointer-events:none}
 .aud-traces path{fill:none;stroke:var(--accent);stroke-width:1;vector-effect:non-scaling-stroke;opacity:.65}
-.aud-dot{position:absolute;width:7px;height:7px;background:var(--accent);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none}
+.aud-dot{position:absolute;width:7px;height:7px;background:var(--accent);border-radius:50%;transform:translate(-50%,-50%);pointer-events:none;opacity:0}
+.aud-traces{clip-path:inset(0 50%)}
+.aud-network.seen .aud-traces{animation:trace-out 1.1s var(--ease) .15s forwards}
+.aud-network.seen .aud-dot{animation:dot-in .4s var(--ease) 1s forwards}
+@keyframes trace-out{to{clip-path:inset(0 0)}}
+@keyframes dot-in{to{opacity:1}}
+@media (scripting:none),(prefers-reduced-motion:reduce){.aud-traces,.aud-network.seen .aud-traces{animation:none;clip-path:none}.aud-dot,.aud-network.seen .aud-dot{animation:none;opacity:1}}
 .dot-tl,.dot-tr{top:18.5714%}.dot-bl,.dot-br{top:81.4286%}
 .dot-tl,.dot-bl{left:calc(50% - 100px)}.dot-tr,.dot-br{left:calc(50% + 100px)}
 .aud-hub{position:absolute;z-index:1;left:50%;top:50%;transform:translate(-50%,-50%);display:grid;place-items:center;width:96px;height:96px;background:var(--bg)}
@@ -312,5 +321,5 @@ td:first-child{color:var(--text-strong);white-space:nowrap}
   .ev-kind{grid-column:2;grid-row:1;align-self:start}
   .ev-main{grid-column:1/-1;grid-row:2}
 }
-@media (max-width:520px){.schemes button{padding:4px 8px;font-size:11px}.corners{inset:10px 10px;font-size:10px}[data-corner="readout"]{display:none}.caption{min-height:6.2em}.map-row,.swatches{grid-template-columns:1fr}}
+@media (max-width:520px){.schemes button{padding:4px 8px;font-size:11px}.corners{inset:10px 10px;font-size:10px}[data-corner="readout"]{display:none}.caption{min-height:7.6em}.map-row,.swatches{grid-template-columns:1fr}}
 `;

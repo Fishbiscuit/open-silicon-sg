@@ -42,6 +42,7 @@ export function cookerScene({ W = 900, H = 640 } = {}) {
   inside.push(L(k.ring(0, 0, 18, 34, P, 40), { tone: "lo" }));
   // inner wall shading, so the well reads as deep
   inside.push(`<path d="${k.onTop(k.circleRing(0, 0, 108.4, 96), BODY_TOP - 120, P, true)}" fill="none" stroke="var(--ck-wall)" stroke-width="1"/>`);
+  inside.push(`<path class="ck-heat" data-at="1 1.8" d="${well}"/>`);
   body.push(`<g clip-path="url(#ck-well)">${inside.join("")}</g>`);
   body.push(L(k.ring(0, 0, 116, BODY_TOP, P, 96), { tone: "lo" }));
 
@@ -56,6 +57,10 @@ export function cookerScene({ W = 900, H = 640 } = {}) {
       for (let i = 0; i <= 4; i++) pts.push([cx + Math.cos(a0 + (i / 4) * Math.PI / 2) * r, cy + Math.sin(a0 + (i / 4) * Math.PI / 2) * r]);
     return pts;
   };
+  // The sensor's wire, from under the pot to the slid-out board, passing behind the panel.
+  const wireFrom = at([vx * 96, vy * 96, BODY_TOP]);
+  const wireTo = at([vx * 70 + LIFT.board[0], vy * 70 + LIFT.board[1], 28]);
+  body.push(`<path class="flow" data-at="0 0.55" pathLength="1" d="M${r2(wireFrom[0])} ${r2(wireFrom[1])}V${r2(wireTo[1])}"/>`);
   body.push(S(G.prismOf(PF, panelPoly(112, 92, 8), -4, 9.5, P), { tone: "hi" }));
   const onPanel = (x, y, ds = 9.6) => at([panelO[0] + out[0] * ds + side[0] * x, panelO[1] + out[1] * ds + side[1] * x, panelO[2] + y]);
   const panelPath = (pts, closed) => k.pathOf(pts.map(([x, y]) => onPanel(x, y)), closed);
@@ -160,6 +165,8 @@ export function cookerScene({ W = 900, H = 640 } = {}) {
     return o;
   }]);
   parts.sort((a, b) => k.depthOf([a[0][0], a[0][1], 0], P) - k.depthOf([b[0][0], b[0][1], 0], P)).forEach(([, f]) => board.push(f()));
+  // the sensor's wire arrives across the board
+  board.push(`<path class="flow" data-at="0.5 0.8" pathLength="1" d="${k.onTop([[B.y, B.y], [mcu.x, mcu.y]], T, P)}"/>`);
   // a ribbon of wires back to the shell
   board.push(L(k.onTop([[B.x + 10, B.y + B.d], [B.x + 10, B.y + B.d + 0.1]], T, P), { tone: "lo" }));
 

@@ -28,12 +28,23 @@
   // Between the last object and the end card: an open chip, signed in its metal.
   const O = { cellOut: [0, 1.2], in: [0.4, 1.4], spot: [1.2, 3.4], zoom: [3.2, 5.4] };
   const OPEN_LEN = DATA.open ? 6.6 : 0;
-  // A circuit that runs gets extra seconds on screen, on top of its object's beat.
-  const FLIP = { closer: [-0.6, 1.0], ready: [0, 0.4], rise: [1.2, 1.6], fall: [1.5, 2.0], unrise: [3.4, 3.8], unfall: [3.7, 4.2], end: 5.0 };
-  const HOLD = DATA.beats.map((b) => (b.flip ? FLIP.end - (SEG.out[0] - SEG.sch[1]) : 0));
-  const AT = HOLD.reduce((at, h, i) => [...at, at[i] + BEAT + h], [0]); // when each object starts
+  // What each circuit does once it's drawn: seconds after the schematic finishes,
+  // each input listing [when, new value]. Everything else follows 0.3 s behind.
+  const RUNS = {
+    inv: { end: 4.8, inputs: { a: [[1.1, 1], [3.1, 0]] }, nodes: ({ a }) => ({ y: 1 - a, down: a }) },
+    nand2: { end: 5.8, inputs: { a: [[1.1, 1], [4.0, 0]], b: [[2.4, 1]] }, nodes: ({ a, b }) => ({ pa: 1 - a, pb: 1 - b, y: 1 - a * b, down: a * b }) },
+    sram: { end: 5.4, inputs: { drive: [[1.0, 1], [3.9, 0]], wl: [[1.7, 1], [3.4, 0]], q: [[2.3, 1]] }, nodes: ({ q, drive, wl }) => ({ nq: 1 - q, bl: drive, acc: wl * drive, one: 1, zero: 0 }) },
+  };
+  const CLOSER = [-0.6, 1.0]; // the camera leans in while a circuit runs
+  const HOLD = DATA.beats.map((b) => (RUNS[b.flip] ? RUNS[b.flip].end - (SEG.out[0] - SEG.sch[1]) : 0));
+  // What an object does before the camera moves in: the scene waits at ACT_AT while it plays.
+  const ACT_AT = 5.2;
+  const ACTS = { card: { len: 1.5, lit: 1.15 }, cooker: { len: 2.1, lit: 0.8 } };
+  const ACT = DATA.beats.map((b) => ACTS[b.id]?.len ?? 0);
+  const AT = HOLD.reduce((at, h, i) => [...at, at[i] + BEAT + ACT[i] + h], [0]); // when each object starts
   const LAST = DATA.beats.length - 1;
-  const OPEN_AT = AT[LAST] + HOLD[LAST] + SEG.sch[1] + 0.6;
+  const OPEN_AT = AT[LAST] + ACT[LAST] + (HOLD[LAST] ? SEG.out[0] + HOLD[LAST] : SEG.sch[1] + 0.6);
+  const warp = (i, t) => (t < ACT_AT ? t : Math.max(ACT_AT, t - ACT[i]));
   const END_AT = OPEN_AT + OPEN_LEN;
   const TOTAL = END_AT + END_LEN;
   // Each button covers its part of the sequence: one object, or the open chip through to the end card.
@@ -41,6 +52,7 @@
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const seg = (t, [a, b]) => clamp((t - a) / (b - a));
   const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+  const lift = (x) => ease(Math.pow(x, 0.72)); // parts weigh less than the camera: they leave sooner and settle longer
   const lerp = (a, b, t) => a + (b - a) * t;
   const fx = (v) => Math.round(v * 1000) / 1000;
 
@@ -52,6 +64,11 @@
     return {
       ...b,
       hold: HOLD[i],
+      i,
+      act: ACTS[b.id],
+      field: obj.querySelector(".field"),
+      flows: [...obj.querySelectorAll(".flow")].map((el) => ({ el, at: el.dataset.at.split(" ").map(Number) })),
+      fades: [...obj.querySelectorAll(".ck-heat")].map((el) => ({ el, at: el.dataset.at.split(" ").map(Number) })),
       obj,
       die,
       cells,
@@ -70,12 +87,10 @@
       cellHalo: cells.querySelector(".cell-halo"),
       sch: [...cells.querySelectorAll(".sch")],
       schDots: [...cells.querySelectorAll(".sch-n,.sch-b,.sch-t")],
-      wires: b.flip && {
-        in: [...cells.querySelectorAll(".flip-in")],
-        up: cells.querySelector(".flip-up"),
-        down: cells.querySelector(".flip-down"),
-        a: cells.querySelector('[data-bit="a"]'),
-        y: cells.querySelector('[data-bit="y"]'),
+      run: RUNS[b.flip] && {
+        ...RUNS[b.flip],
+        paths: [...cells.querySelectorAll(".flip")],
+        bits: [...cells.querySelectorAll(".bit")].map((el) => ({ el, face: el.querySelector(".bit-face"), one: el.querySelector(".bit-1"), zero: el.querySelector(".bit-0") })),
       },
     };
   });
@@ -136,25 +151,25 @@
     if (text) caption.timer = setTimeout(() => { capEl.textContent = text; capEl.classList.add("on"); }, 220);
   }
 
-  // The inverter runs: A goes to 1 and Y drains to 0 through the lower transistor;
-  // A goes back to 0 and Y fills from the power rail through the upper one.
-  function drawFlip(w, s) {
-    const ready = ease(seg(s, FLIP.ready));
-    const a = ease(seg(s, FLIP.rise)) * (1 - ease(seg(s, FLIP.unrise)));
-    const y = 1 - ease(seg(s, FLIP.fall)) * (1 - ease(seg(s, FLIP.unfall)));
-    w.in.forEach((el) => (el.style.strokeDashoffset = fx(1 - a)));
-    w.up.style.strokeDashoffset = fx(1 - y * ready);
-    w.down.style.strokeDashoffset = fx(y);
+  // One input easing through its changes.
+  const level = (s, changes) => changes.reduce((v, [at, to]) => lerp(v, to, ease(seg(s, [at, at + 0.4]))), 0);
+  function drawRun(run, s) {
+    const read = (at) => Object.fromEntries(Object.entries(run.inputs).map(([k, changes]) => [k, level(at, changes)]));
+    const vals = { ...read(s), ...run.nodes(read(s - 0.3)) };
+    const ready = ease(seg(s, [0, 0.4]));
+    for (const el of run.paths) el.style.strokeDashoffset = fx(1 - vals[el.dataset.on] * ready);
     // Each bit turns over like a tile, showing its new value on the way back.
-    for (const [el, v] of [[w.a, a], [w.y, y]]) {
-      el.style.opacity = fx(ready);
-      el.querySelector(".bit-face").setAttribute("transform", `scale(1 ${fx(Math.abs(2 * v - 1))})`);
-      el.querySelector(".bit-1").style.opacity = v > 0.5 ? 1 : 0;
-      el.querySelector(".bit-0").style.opacity = v > 0.5 ? 0 : 1;
+    for (const { el, face, one, zero } of run.bits) {
+      const v = vals[el.dataset.bit];
+      el.style.opacity = fx(ready * (el.dataset.show ? vals[el.dataset.show] : 1));
+      face.setAttribute("transform", `scale(1 ${fx(Math.abs(2 * v - 1))})`);
+      one.style.opacity = v > 0.5 ? 1 : 0;
+      zero.style.opacity = v > 0.5 ? 0 : 1;
     }
   }
 
-  function drawBeat(b, t, cssScale) {
+  function drawBeat(b, raw, cssScale) {
+    const t = warp(b.i, raw), s = raw - ACT_AT;
     const W = b.W, H = b.H, C = [W / 2, H / 2];
     // Object stage.
     const oIn = ease(seg(t, SEG.in));
@@ -165,13 +180,19 @@
     const pA = [lerp(b.restC[0], C[0], eE), lerp(b.restC[1], C[1], eE)];
     const pObj = [lerp(pA[0], b.objFocus[0], z), lerp(pA[1], b.objFocus[1], z)];
     camAt(b.objCam, sObj, pObj, [C[0], C[1] + (1 - oIn) * 14]);
+    // The tap: the card dips to the reader just before it comes apart, and the field wakes.
+    const press = b.tap ? ease(seg(t, [1.4, 1.8])) * (1 - ease(seg(t, [2.0, 2.45]))) : 0;
+    const px = b.tap ? b.tap[0] * press : 0, py = b.tap ? b.tap[1] * press : 0;
     for (const p of b.parts) {
-      const e = ease(clamp((t - SEG.explode[0] - p.order * 0.16) / (SEG.explode[1] - SEG.explode[0])));
-      p.el.setAttribute("transform", `translate(${fx(p.ex[0] * e)} ${fx(p.ex[1] * e)})`);
+      const e = lift(clamp((t - SEG.explode[0] - p.order * 0.16) / (SEG.explode[1] - SEG.explode[0])));
+      p.el.setAttribute("transform", `translate(${fx(p.ex[0] * e + px)} ${fx(p.ex[1] * e + py)})`);
       if (p.reveal) p.el.style.opacity = fx(clamp(e * 2.5));
     }
+    for (const f of b.flows) f.el.style.strokeDashoffset = fx(1 - ease(seg(s, f.at)));
+    for (const f of b.fades) f.el.style.opacity = fx(ease(seg(s, f.at)));
     for (const el of b.dims) { el.style.opacity = fx(1 - 0.82 * z); if (!still.matches) blur(el, z * 3); }
-    b.obj.classList.toggle("lit", t > SEG.explode[0] + 0.6);
+    if (b.field) b.field.style.opacity = fx(ease(seg(t, [1.5, 1.9])) * (1 - 0.82 * z)); // silent until the tap
+    b.obj.classList.toggle("lit", b.act ? s > b.act.lit : t > SEG.explode[0] + 0.6);
     show(b.obj, oIn * (1 - seg(t, SEG.x1)));
     if (!still.matches) blur(b.obj, 9 * ease(seg(t, SEG.x1)));
 
@@ -201,7 +222,7 @@
     const xc = seg(t, SEG.x2);
     const c = ease(seg(t, SEG.cell));
     const settle = 1 + 0.045 * ease(seg(t, [SEG.cell[1], BEAT + b.hold])); // keep drifting in while the schematic draws
-    const closer = b.wires ? ease(seg(t - SEG.sch[1], FLIP.closer)) : 0; // lean in while the circuit runs
+    const closer = b.run ? ease(seg(t - SEG.sch[1], CLOSER)) : 0;
     const sCell = b.cellFit * Math.exp(Math.log(b.cellZoom) * c) * settle * (1 + 0.3 * closer);
     const p0 = [(C[0] - b.cellOrigin[0]) / b.cellFit, (C[1] - b.cellOrigin[1]) / b.cellFit];
     const vc = ease(clamp(seg(t, SEG.cell) * 1.4));
@@ -212,10 +233,10 @@
     b.cellHalo.style.opacity = fx(clamp(c * 2));
     b.sch.forEach((el, i) => { el.style.strokeDashoffset = fx(1 - clamp(d * 1.3 - i * 0.02)); });
     b.schDots.forEach((el) => (el.style.opacity = fx(clamp(d * 2 - 0.8))));
-    if (b.wires) drawFlip(b.wires, t - SEG.sch[1]);
+    if (b.run) drawRun(b.run, t - SEG.sch[1]);
     const outAt = SEG.out.map((v) => v + b.hold);
     const out = b.n === beats.length ? 0 : seg(t, outAt); // the last object hands over to the end card instead
-    if (b.n === beats.length && t + AT[LAST] >= OPEN_AT) return; // drawOpen owns the cell layer from here
+    if (b.n === beats.length && raw + AT[LAST] >= OPEN_AT) return; // drawOpen owns the cell layer from here
     show(b.cells, xc * (1 - out));
     if (!still.matches) blur(b.cells, 9 * (1 - ease(xc)) + 6 * ease(out));
 
@@ -226,11 +247,11 @@
     const capKey = t < 1.2 || (t >= outAt[0] && b.n < beats.length) ? "" : t < SEG.x1[0] ? 0 : t < SEG.x2[0] ? 1 : 2;
     if (capKey === "") caption("");
     else caption(`${b.id}${capKey}`, b.copy[capKey]);
-    let pxPerUm;
-    if (stageIndex === 0) pxPerUm = (b.objPx * sObj * cssScale) / b.objUm;
-    else if (stageIndex === 1) pxPerUm = m < 0.5 ? (b.diePx * sDie * cssScale) / b.dieUmPerWorld : (b.planPx * sDie * cssScale) / (b.dieUm / 1000);
-    else pxPerUm = (sCell * cssScale) / 0.01;
-    scaleBar(pxPerUm);
+    const pxObj = (b.objPx * sObj * cssScale) / b.objUm;
+    const pxDie = m < 0.5 ? (b.diePx * sDie * cssScale) / b.dieUmPerWorld : (b.planPx * sDie * cssScale) / (b.dieUm / 1000);
+    // The object's chip is drawn larger than life, so the scale glides across the first join.
+    const glide = seg(t, [SEG.join[0], SEG.x1[1]]);
+    scaleBar(stageIndex === 2 ? (sCell * cssScale) / 0.01 : Math.exp(lerp(Math.log(pxObj), Math.log(pxDie), glide)));
   }
 
   // The end card: crystal, one atom, the tile, the trace, the name.
@@ -287,7 +308,13 @@
 
   // Open on the assembled card rather than a fade from black, so the first
   // still frame (and any link preview) already shows the object.
-  let t = SEG.in[1], playing = !still.matches, visible = true, last = 0, frame = 0, done = false;
+  let t = 1.3, playing = !still.matches, visible = true, last = 0, frame = 0, done = false;
+  // The card waits until someone is looking: a first scroll, its caption in view, or six seconds.
+  let waiting = !still.matches;
+  const begin = () => { waiting = false; };
+  addEventListener("scroll", begin, { once: true, passive: true });
+  setTimeout(begin, 6000);
+  new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) begin(); }, { threshold: 0.9 }).observe(capEl);
 
   const cssScaleNow = () => stage.querySelector("svg").getBoundingClientRect().width / DATA.beats[0].W;
   // The open chip: the whole shared die, its many projects, then the signed one.
@@ -352,7 +379,8 @@
     if (t >= END_AT) drawEnd(t - END_AT, cssScale);
     else resetEnd();
     // Dust belongs to the room: it thins as the camera dives and returns with the end card.
-    show(motes, t >= END_AT ? ease(seg(t - END_AT, E.name)) : ease(seg(local, SEG.in)) * (1 - ease(seg(local, SEG.zoom))));
+    const inScene = warp(i, local);
+    show(motes, t >= END_AT ? ease(seg(t - END_AT, E.name)) : ease(seg(inScene, SEG.in)) * (1 - ease(seg(inScene, SEG.zoom))));
     chips.forEach((c, j) => {
       const a = starts[j], b = starts[j + 1] ?? TOTAL;
       c.style.setProperty("--p", fx(clamp((t - a) / (b - a))));
@@ -363,7 +391,7 @@
   function tick(now) {
     const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 0;
     last = now;
-    if (playing && !done) {
+    if (playing && !done && !waiting) {
       t += dt;
       if (t >= TOTAL) { t = TOTAL; finale(true); }
       else render();
@@ -373,6 +401,7 @@
   const run = () => { if (!frame && playing && visible && !done) { last = 0; frame = requestAnimationFrame(tick); } };
   const setPlaying = (on) => {
     playing = on;
+    if (on) begin();
     stage.classList.toggle("paused", !on);
     pauseBtn.setAttribute("aria-pressed", String(!on));
     pauseBtn.querySelector("span").textContent = on ? "Pause" : "Play";
@@ -385,7 +414,7 @@
   new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; run(); }, { threshold: 0.15 }).observe(stage);
   document.addEventListener("visibilitychange", () => { visible = !document.hidden; run(); });
 
-  window.__hero = { seek: (s) => { finale(false); t = s; capIndex = null; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, AT, FLIP, SEG, END_AT, TOTAL };
+  window.__hero = { seek: (s) => { finale(false); t = s; capIndex = null; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, AT, SEG, END_AT, TOTAL };
   if (still.matches) finale(true);
   else { render(); run(); }
 })();
