@@ -1,5 +1,5 @@
 // The chip, opened. Two stages per object:
-//   dieScene  — the package with its lid off, then the die's floorplan, which
+//   dieScene  — the package opening, then the die's floorplan, which
 //               untilts from the isometric top face into a flat plan view.
 //   cellScene — standard-cell rows at true proportion, then one cell and its
 //               transistor schematic drawn over the layout it describes.
@@ -18,7 +18,7 @@ export function dieScene(spec, { W = 900, H = 640 } = {}) {
   const LIFT = pkg === "flip" ? 34 : 0;
   const BZ = 0;
   const extremes = [...k.boxCorners(BODY, BZ - 10, BZ + 6), ...k.boxCorners(DIE, LIFT, LIFT + 70)];
-  const P = k.fitProjection(extremes, W, H, { pad: 70, azimuth: 45 });
+  const P = k.fitProjection(extremes, W, H, { pad: 70, azimuth: spec.azimuth ?? 45 }); // the object's angle, so the chip doesn't turn between scenes
   const s = scene(P);
   const { at, S, L, D, box, cyl, halo, part, arch } = s;
   const out = [];
@@ -111,11 +111,8 @@ export function dieScene(spec, { W = 900, H = 640 } = {}) {
   const wireD = wires.map(([a, b]) => arch([a[0], a[1], dieTop], [b[0], b[1], top + 0.8], pkg === "module" ? 10 : 9)).join("");
   if (wireD) out.push(`<g class="wires">${L(wireD, { className: "au" })}${D(wires.map(([a]) => at([a[0], a[1], dieTop])), { size: 0.9, tone: "hi" })}</g>`);
 
-  // The lid, lifted away and translucent.
-  if (pkg !== "flip") {
-    const lid = k.insetPlan(BODY, 0);
-    out.push(part("lid", box(lid, BZ + 46, 7, { mat: "glass", tone: "mid" }, 6, 0.8), [0, 0, 18], ' data-order="0"'));
-  }
+  // The closed top of the package, which lifts away. The card's module is already open.
+  if (pkg !== "module") out.push(part("lid", box(BODY, top, 3, { mat: "epoxy", tone: "hi", lit: true }, 6, 0.8), [0, 0, 0], ' data-order="0"'));
   // The focus point in plan view, and in the floorplan's own coordinates.
   const fp = plan.focus;
   const fxy = [planM[4] + fp[0] * ps, planM[5] + fp[1] * ps];
@@ -126,6 +123,9 @@ export function dieScene(spec, { W = 900, H = 640 } = {}) {
     W,
     H,
     centre: centre.map(r2),
+    // What lines up with the chip in the object scene: the die on the card's module, the whole package otherwise.
+    matchW: pkg === "module" ? DIE.w : BODY.w,
+    anchor: (pkg === "module" ? centre : at([BODY.x + BODY.w / 2, BODY.y + BODY.d / 2, top])).map(r2),
     focus: fxy.map(r2),
     planSide: r2(side),
     planScale: r2(ps),
@@ -390,7 +390,6 @@ export function cellScene(spec, { W = 900, H = 640 } = {}) {
   // A memory cell sits in a regular array; logic cells sit in mixed rows.
   const types = spec.cell === "sram" ? [["sram", 6]] : [["inv", 3], ["nand2", 4], ["nor2", 4], ["buf", 4], ["dff", 19], ["buf", 6], ["inv", 3], ["fill", 1], ["tap", 1], ["fill", 2]];
   const out = [];
-  out.push(rect(-40, -60, width + 80, height + 120, C.sub));
   let focus = null;
   for (let r = 0; r < rows; r++) {
     const flip = r % 2 === 1;
@@ -414,7 +413,7 @@ export function cellScene(spec, { W = 900, H = 640 } = {}) {
   }
   // Power rails (met1) on every row boundary, and a vertical strap.
   for (let r = 0; r <= rows; r++) out.push(rect(-40, r * ROW - 24, width + 80, 48, C.met));
-  for (let sx = 900; sx < width; sx += 1600) out.push(rect(sx, -60, 160, height + 120, "var(--lay-met)", ' fill-opacity=".45"'));
+  for (let sx = 900; sx < width; sx += 1600) out.push(rect(sx, 0, 160, height, "var(--lay-met)", ' fill-opacity=".45"'));
   // A little routing on metal 2 over the rows.
   const R2 = rand(5);
   for (let i = 0; i < 18; i++) {
@@ -435,6 +434,9 @@ export function cellScene(spec, { W = 900, H = 640 } = {}) {
   const fcy = fy + ROW / 2;
   const closeW = f.w + pad * 2 + 120;
   const closeScale = Math.min(W / closeW, H / (ROW + pad * 2)) / fit;
+  // Standard-cell rows abut mirrored, so a copy above and below fills the frame at the join with the die.
+  const rowsId = `${spec.id}-rows`;
+  const rows3 = `${rect(-40, -height - 60, width + 80, height * 3 + 120, C.sub)}<g id="${rowsId}">${out.join("")}</g><use href="#${rowsId}" transform="scale(1 -1)"/><use href="#${rowsId}" transform="translate(0 ${height * 2}) scale(1 -1)"/>`;
   return {
     id: `${spec.id}-cells`,
     W,
@@ -444,7 +446,7 @@ export function cellScene(spec, { W = 900, H = 640 } = {}) {
     focus: [r2(fcx), r2(fcy)],
     zoom: r2(closeScale),
     umPerUnit: 0.01,
-    body: `<g class="cells">${out.join("")}</g><rect class="cell-halo" x="${f.x - 6}" y="${fy - 30}" width="${f.w + 12}" height="${ROW + 60}" fill="none" stroke="var(--lay-poly)" stroke-width="1.4"/>${sch}`,
+    body: `<g class="cells">${rows3}</g><rect class="cell-halo" x="${f.x - 6}" y="${fy - 30}" width="${f.w + 12}" height="${ROW + 60}" fill="none" stroke="var(--lay-poly)" stroke-width="1.4"/>${sch}`,
     label: spec.cellLabel,
   };
 }

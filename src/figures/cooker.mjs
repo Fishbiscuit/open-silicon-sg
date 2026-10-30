@@ -180,6 +180,7 @@ export function cookerScene({ W = 900, H = 640 } = {}) {
     H,
     focus: [r2(focus[0]), r2(focus[1])],
     zoom: 7.5,
+    chipW: mcu.w,
     label: "A rice cooker comes apart: the domed lid lifts, the inner pot rises out showing rice inside, and the control board slides forward with its microcontroller lit. Through the open body you can see the heating plate and the temperature sensor at its centre.",
     body: [
       bodyG,

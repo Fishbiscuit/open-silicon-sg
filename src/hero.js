@@ -15,11 +15,12 @@
   const chips = [...root.querySelectorAll("[data-jump]")];
   const replay = root.querySelector("[data-replay]");
   const pauseBtn = root.querySelector("[data-pause]");
+  const motes = root.querySelector("canvas.motes");
   const still = matchMedia("(prefers-reduced-motion: reduce)");
 
   // Give each object and its captions more time without changing the end card.
   const OBJECT_SPEED = 0.8;
-  const SEG = Object.fromEntries(Object.entries({ in: [0, 0.9], explode: [1.7, 3.5], zoom: [4.3, 6.4], x1: [6.0, 6.7], die: [6.0, 7.8], morph: [7.7, 9.0], plan: [8.9, 10.9], x2: [10.4, 11.0], cell: [10.6, 12.4], sch: [12.2, 13.8], out: [14.8, 15.4] }).map(([name, times]) => [name, times.map(t => t / OBJECT_SPEED)]));
+  const SEG = Object.fromEntries(Object.entries({ in: [0, 0.9], explode: [1.7, 3.5], zoom: [4.3, 6.4], join: [5.7, 6.1], x1: [6.0, 6.7], die: [6.0, 7.8], morph: [7.7, 9.0], plan: [8.9, 10.9], x2: [10.4, 11.0], cell: [10.6, 12.4], sch: [12.2, 13.8], out: [14.8, 15.4] }).map(([name, times]) => [name, times.map(t => t / OBJECT_SPEED)]));
   const BEAT = 15.4 / OBJECT_SPEED;
   // The end card starts once the last object's schematic has been drawn.
   const E = { cellOut: [0, 1.5], latIn: [0.5, 1.5], latZoom: [0.8, 4.2], pick: [3.6, 4.4], morph: [4.3, 5.7], cells: [5.4, 6.8], label: [6.5, 7.1], slide: [7.0, 8.4], trace: [7.3, 9.1], name: [8.1, 9.3] };
@@ -113,13 +114,13 @@
     if (barLabel.textContent !== label) barLabel.textContent = label;
   }
 
-  let capIndex = "";
+  let capIndex = null;
   function caption(key, text) {
     if (capIndex === key) return;
     capIndex = key;
     capEl.classList.remove("on");
     clearTimeout(caption.timer);
-    caption.timer = setTimeout(() => { capEl.textContent = text; capEl.classList.add("on"); }, 220);
+    if (text) caption.timer = setTimeout(() => { capEl.textContent = text; capEl.classList.add("on"); }, 220);
   }
 
   function drawBeat(b, t, cssScale) {
@@ -131,7 +132,8 @@
     const push = 1 + 0.035 * ease(seg(t, [0, SEG.zoom[0]])); // a slow dolly-in while we look
     const sObj = lerp(b.restZ, 1, eE) * push * Math.exp(Math.log(b.objZoom) * z);
     const pA = [lerp(b.restC[0], C[0], eE), lerp(b.restC[1], C[1], eE)];
-    camAt(b.objCam, sObj, [lerp(pA[0], b.objFocus[0], z), lerp(pA[1], b.objFocus[1], z)], [C[0], C[1] + (1 - oIn) * 14]);
+    const pObj = [lerp(pA[0], b.objFocus[0], z), lerp(pA[1], b.objFocus[1], z)];
+    camAt(b.objCam, sObj, pObj, [C[0], C[1] + (1 - oIn) * 14]);
     for (const p of b.parts) {
       const e = ease(clamp((t - SEG.explode[0] - p.order * 0.16) / (SEG.explode[1] - SEG.explode[0])));
       p.el.setAttribute("transform", `translate(${fx(p.ex[0] * e)} ${fx(p.ex[1] * e)})`);
@@ -143,16 +145,18 @@
     if (!still.matches) blur(b.obj, 9 * ease(seg(t, SEG.x1)));
 
     // Die stage.
-    const xd = seg(t, SEG.x1);
+    const xd = seg(t, SEG.join);
     const d1 = ease(seg(t, SEG.die));
     const m = ease(seg(t, SEG.morph));
     const pz = seg(t, SEG.plan);
     const pe = ease(pz);
-    const sDie0 = lerp(0.42, 1.9, d1);
+    // The package lands on the chip at the same size and place, then takes over the camera.
+    const sDie0 = lerp(b.dieFit * sObj, 1.9, d1);
     const sDie = sDie0 * Math.exp(Math.log(b.planZoom) * pe);
     const v = ease(clamp(pz * 1.7));
-    const pDie = [lerp(b.dieCentre[0], b.dieFocus[0], v), lerp(b.dieCentre[1], b.dieFocus[1], v)];
-    camAt(b.dieCam, sDie, pDie, C);
+    const pStart = [lerp(b.dieAnchor[0], b.dieCentre[0], d1), lerp(b.dieAnchor[1], b.dieCentre[1], d1)];
+    const pDie = [lerp(pStart[0], b.dieFocus[0], v), lerp(pStart[1], b.dieFocus[1], v)];
+    camAt(b.dieCam, sDie, pDie, [C[0] + sObj * (b.objFocus[0] - pObj[0]), C[1] + sObj * (b.objFocus[1] - pObj[1])]);
     const M = b.iso.map((a, i) => lerp(a, b.plan[i], m));
     b.layout.setAttribute("transform", `matrix(${M.map(fx).join(" ")})`);
     const pkgO = 1 - clamp(m * 1.4);
@@ -160,7 +164,7 @@
     if (b.lid) b.lid.setAttribute("transform", `translate(0 ${fx(-60 * d1)})`), (b.lid.style.opacity = fx((1 - d1) * pkgO));
     if (b.mark) b.mark.style.opacity = fx(clamp(pz * 3) * (1 - clamp((pz - 0.7) * 4)));
     show(b.die, xd * (1 - seg(t, SEG.x2)));
-    if (!still.matches) blur(b.die, 9 * (1 - ease(xd)) + 9 * ease(seg(t, SEG.x2)));
+    if (!still.matches) blur(b.die, 9 * ease(seg(t, SEG.x2)));
 
     // Cell stage.
     const xc = seg(t, SEG.x2);
@@ -185,8 +189,9 @@
     const stageIndex = t < SEG.x1[0] + 0.35 ? 0 : t < SEG.x2[0] + 0.3 ? 1 : 2;
     figEl.textContent = `Fig ${b.n}.${"abc"[stageIndex]}`;
     titleEl.textContent = b.titles[stageIndex];
-    const capKey = t < 1.2 ? "" : t < SEG.x1[0] ? 0 : t < SEG.x2[0] ? 1 : 2;
-    if (capKey !== "") caption(`${b.id}${capKey}`, b.copy[capKey]);
+    const capKey = t < 1.2 || (t >= SEG.out[0] && b.n < beats.length) ? "" : t < SEG.x1[0] ? 0 : t < SEG.x2[0] ? 1 : 2;
+    if (capKey === "") caption("");
+    else caption(`${b.id}${capKey}`, b.copy[capKey]);
     let pxPerUm;
     if (stageIndex === 0) pxPerUm = (b.objPx * sObj * cssScale) / b.objUm;
     else if (stageIndex === 1) pxPerUm = m < 0.5 ? (b.diePx * sDie * cssScale) / b.dieUmPerWorld : (b.planPx * sDie * cssScale) / (b.dieUm / 1000);
@@ -311,6 +316,8 @@
     else resetOpen();
     if (t >= END_AT) drawEnd(t - END_AT, cssScale);
     else resetEnd();
+    // Dust belongs to the room: it thins as the camera dives and returns with the end card.
+    show(motes, t >= END_AT ? ease(seg(t - END_AT, E.name)) : ease(seg(local, SEG.in)) * (1 - ease(seg(local, SEG.zoom))));
     chips.forEach((c, j) => {
       const a = starts[j], b = starts[j + 1] ?? TOTAL;
       c.style.setProperty("--p", fx(clamp((t - a) / (b - a))));
@@ -331,18 +338,19 @@
   const run = () => { if (!frame && playing && visible && !done) { last = 0; frame = requestAnimationFrame(tick); } };
   const setPlaying = (on) => {
     playing = on;
+    stage.classList.toggle("paused", !on);
     pauseBtn.setAttribute("aria-pressed", String(!on));
     pauseBtn.querySelector("span").textContent = on ? "Pause" : "Play";
     run();
   };
 
-  replay.addEventListener("click", () => { finale(false); t = 0; capIndex = ""; render(); setPlaying(true); });
+  replay.addEventListener("click", () => { finale(false); t = 0; caption(""); render(); setPlaying(true); });
   pauseBtn.addEventListener("click", () => { if (done) { replay.click(); return; } setPlaying(!playing); });
-  chips.forEach((c, j) => c.addEventListener("click", () => { finale(false); t = starts[j] + 0.001; capIndex = ""; render(); setPlaying(true); }));
+  chips.forEach((c, j) => c.addEventListener("click", () => { finale(false); t = starts[j] + 0.001; caption(""); render(); setPlaying(true); }));
   new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; run(); }, { threshold: 0.15 }).observe(stage);
   document.addEventListener("visibilitychange", () => { visible = !document.hidden; run(); });
 
-  window.__hero = { seek: (s) => { finale(false); t = s; capIndex = ""; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, SEG, END_AT, TOTAL };
+  window.__hero = { seek: (s) => { finale(false); t = s; capIndex = null; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, SEG, END_AT, TOTAL };
   if (still.matches) finale(true);
   else { render(); run(); }
 })();

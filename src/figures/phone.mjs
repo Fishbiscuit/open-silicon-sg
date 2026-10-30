@@ -12,7 +12,8 @@ export function phoneScene({ W = 900, H = 640 } = {}) {
   const P = k.fitProjection(extremes, W, H, { pad: 50, azimuth: 34 });
   const s = scene(P);
   const { at, S, L, D, box, cyl, halo, part } = s;
-  const byPlan = (list) => list.sort((a, b) => k.depthOf([a.p.x + a.p.w / 2, a.p.y + a.p.d / 2, 0], P) - k.depthOf([b.p.x + b.p.w / 2, b.p.y + b.p.d / 2, 0], P));
+  // The board goes down first, or everything behind its centre is painted under it.
+  const byPlan = (list) => list.sort((a, b) => (b.under ?? 0) - (a.under ?? 0) || k.depthOf([a.p.x + a.p.w / 2, a.p.y + a.p.d / 2, 0], P) - k.depthOf([b.p.x + b.p.w / 2, b.p.y + b.p.d / 2, 0], P));
 
   // ---- back glass, camera plateau, coil.
   const back = [halo(k.insetPlan(PH, 3), 0, 1, 10), box(PH, 0, 0.9, { mat: "glass", tone: "mid" }, 10, 0.6)];
@@ -48,7 +49,7 @@ export function phoneScene({ W = 900, H = 640 } = {}) {
   // logic board
   const PCB = { x: 10, y: -32, w: 60, d: 38, r: 2 };
   const BT = IZ + 0.8;
-  items.push({ p: PCB, f: () => {
+  items.push({ p: PCB, under: 1, f: () => {
     let o = box(PCB, IZ, 0.8, { mat: "pcb", tone: "mid" }, 3);
     const trace = [];
     for (let i = 0; i < 8; i++) trace.push(k.onTop([[PCB.x + 4, PCB.y + 4 + i * 4], [PCB.x + 14, PCB.y + 4 + i * 4]], BT, P));
@@ -133,6 +134,7 @@ export function phoneScene({ W = 900, H = 640 } = {}) {
     H,
     focus: [r2(f[0]), r2(f[1])],
     zoom: 6.2,
+    chipW: SOC.w,
     label: "A phone comes apart as a stack: back glass with a charging coil, then the battery, cameras and logic board, the metal shields lifting off its chips, the frame, the display panel and the cover glass. The main processor on the board is lit.",
     body: [
       part("back", back, [0, 0, LIFT.back]),

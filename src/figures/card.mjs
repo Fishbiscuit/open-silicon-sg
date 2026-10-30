@@ -79,11 +79,11 @@ export function cardScene({ W = 900, H = 640 } = {}) {
   const MZ = IZ;
   const frame = { x: MOD[0] - 10, y: MOD[1] - 6.5, w: 20, d: 13, r: 1.2 };
   const module = [halo(frame, MZ, 0.5, 4), box(frame, MZ, 0.7, { mat: "gold", tone: "hi" }, 3)];
-  module.push(L(k.lineOnTop([MOD[0] + 1.5, frame.y], [MOD[0] + 1.5, frame.y + frame.d], MZ + 0.7, P), { tone: "lo" }));
-  const die = { x: MOD[0] - 4.6, y: MOD[1] - 2.6, w: 5.2, d: 5.2, r: 0.3 };
+  for (const x of [-3.2, 3.2]) module.push(L(k.lineOnTop([MOD[0] + x, frame.y], [MOD[0] + x, frame.y + frame.d], MZ + 0.7, P), { tone: "lo" }));
+  const die = { x: MOD[0] - 2.6, y: MOD[1] - 2.6, w: 5.2, d: 5.2, r: 0.3 };
   module.push(box(die, MZ + 0.7, 0.9, { mat: "die", tone: "hi", lit: true }, 2));
-  module.push(L(arch([die.x + die.w - 0.6, MOD[1] - 1.2, MZ + 1.6], [MOD[0] + 6, MOD[1] - 3, MZ + 0.7], 3.2) + arch([die.x + die.w - 0.6, MOD[1] + 1.2, MZ + 1.6], [MOD[0] + 6, MOD[1] + 3.2, MZ + 0.7], 3.2), { className: "au" }));
-  const cap = [box({ x: MOD[0] - 6.2, y: MOD[1] - 5.2, w: 13.4, d: 10.4, r: 3 }, MZ + 0.7, 2.6, { mat: "epoxy", tone: "mid" }, 6, 0.5)];
+  module.push(L(arch([die.x + 0.6, MOD[1], MZ + 1.6], [MOD[0] - 5.4, MOD[1] - 0.6, MZ + 0.7], 1) + arch([die.x + die.w - 0.6, MOD[1], MZ + 1.6], [MOD[0] + 5.4, MOD[1] + 0.6, MZ + 0.7], 1), { className: "au" }));
+  const cap = [box({ x: MOD[0] - 6.7, y: MOD[1] - 5.2, w: 13.4, d: 10.4, r: 3 }, MZ + 0.7, 2.6, { mat: "epoxy", tone: "mid" }, 6, 0.5)];
 
   const FZ = IZ + 1.2;
   const front = [box(CARD, FZ, 1, { tone: "hi" }, 8, 0.8)];
@@ -110,7 +110,7 @@ export function cardScene({ W = 900, H = 640 } = {}) {
   front.push(L(arcs.join(""), { tone: "mid", free: true }));
   front.push(D([at([mark[0], mark[1], FZ + 1])], { size: 1, tone: "mid" }));
 
-  const focusWorld = [MOD[0] - 2, MOD[1], MZ + 1.6 + LIFT.module];
+  const focusWorld = [MOD[0], MOD[1], MZ + 1.6 + LIFT.module];
   const [fx, fy] = at(focusWorld);
   const body = [
     `<g class="reader">${reader.join("")}</g>`,
@@ -130,6 +130,7 @@ export function cardScene({ W = 900, H = 640 } = {}) {
     H,
     focus: [r2(fx), r2(fy)],
     zoom: 9,
+    chipW: die.w,
     label:
       "A contactless transit card hovering over a reader pad. It comes apart into its printed sheets, an inlay carrying five turns of copper antenna, and a tiny module where one chip sits on a gold lead frame under a drop of epoxy.",
     body: body.join(""),

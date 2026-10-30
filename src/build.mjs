@@ -129,7 +129,7 @@ function buildFigures(hero) {
   return hero.objects.map((o, i) => {
     const F = FIGURES[o.figure];
     const obj = F.scene();
-    const die = dieScene({ ...F.die, label: `${o.titles[1]}: the package with its lid lifted, the bond wires, and the die whose floorplan flattens into a plan view.` });
+    const die = dieScene({ ...F.die, azimuth: obj.P.azimuth, label: `${o.titles[1]}: the package with its lid lifted, the bond wires, and the die whose floorplan flattens into a plan view.` });
     const cells = cellScene({ ...F.cell, cellLabel: `${o.titles[2]}: rows of standard cells, one highlighted, with its transistor schematic drawn over the layout.` });
     return { o, n: i + 1, obj, die, cells, F };
   });
@@ -156,7 +156,7 @@ function heroSection(home, hero, figs, site) {
     return {
       id: obj.id, n, W: obj.W, H: obj.H, titles: o.titles, copy: [o.object, o.chip, o.cell],
       objFocus: obj.focus, restC: obj.restC, restZ: obj.restZ, objZoom: obj.zoom, objPx: r2(obj.P.scale * UNIT), objUm: r2(obj.umPerUnit),
-      dieCentre: die.centre, dieFocus: die.focus, planZoom: r2(Math.min(36, needed) / 1.9), diePx: r2(die.P.scale * UNIT), dieUmPerWorld: r2(die.umPerWorld), planPx: die.planScale, dieUm: F.die.dieUm,
+      dieFit: Math.round((obj.chipW * obj.P.scale * 1e4) / (die.matchW * die.P.scale)) / 1e4, dieAnchor: die.anchor, dieCentre: die.centre, dieFocus: die.focus, planZoom: r2(Math.min(36, needed) / 1.9), diePx: r2(die.P.scale * UNIT), dieUmPerWorld: r2(die.umPerWorld), planPx: die.planScale, dieUm: F.die.dieUm,
       cellFit: cells.fit, cellOrigin: cells.origin, cellFocus: cells.focus, cellZoom: cells.zoom,
     };
   });
