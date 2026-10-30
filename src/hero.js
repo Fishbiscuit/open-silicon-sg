@@ -55,6 +55,8 @@
   const lift = (x) => ease(Math.pow(x, 0.72)); // parts weigh less than the camera: they leave sooner and settle longer
   const lerp = (a, b, t) => a + (b - a) * t;
   const fx = (v) => Math.round(v * 1000) / 1000;
+  // Zoom keeps more digits than position: the scenes sit far from the origin, so a rounded zoom jolts the whole view.
+  const fine = (v) => Math.round(v * 1e6) / 1e6;
 
   const beats = DATA.beats.map((b, i) => {
     const q = (sel) => stage.querySelector(sel);
@@ -115,7 +117,7 @@
     name: endLayer.querySelector(".end-name"),
   };
 
-  const camAt = (el, s, p, q) => el.setAttribute("transform", `translate(${fx(q[0] - s * p[0])} ${fx(q[1] - s * p[1])}) scale(${fx(s)})`);
+  const camAt = (el, s, p, q) => el.setAttribute("transform", `translate(${fx(q[0] - s * p[0])} ${fx(q[1] - s * p[1])}) scale(${fine(s)})`);
   // Focus pulls: a blur that only touches the style when it changes.
   const blur = (el, px) => {
     const v = px < 0.15 ? "none" : `blur(${(Math.round(px * 4) / 4).toFixed(2)}px)`;
@@ -210,7 +212,7 @@
     const pDie = [lerp(pStart[0], b.dieFocus[0], v), lerp(pStart[1], b.dieFocus[1], v)];
     camAt(b.dieCam, sDie, pDie, [C[0] + sObj * (b.objFocus[0] - pObj[0]), C[1] + sObj * (b.objFocus[1] - pObj[1])]);
     const M = b.iso.map((a, i) => lerp(a, b.plan[i], m));
-    b.layout.setAttribute("transform", `matrix(${M.map(fx).join(" ")})`);
+    b.layout.setAttribute("transform", `matrix(${M.map(fine).join(" ")})`);
     const pkgO = 1 - clamp(m * 1.4);
     for (const el of b.pkgBits) el.style.opacity = fx(pkgO);
     if (b.lid) b.lid.setAttribute("transform", `translate(0 ${fx(-60 * d1)})`), (b.lid.style.opacity = fx((1 - d1) * pkgO));
@@ -260,7 +262,7 @@
     const D = EN.D, C = [DATA.beats[0].W / 2, DATA.beats[0].H / 2];
     const from = openLayer || beats[beats.length - 1].cells; // the view we dive out of
     const co = ease(seg(te, E.cellOut));
-    from.style.transform = co > 0.001 ? `scale(${fx(1 + 2.2 * co)})` : "";
+    from.style.transform = co > 0.001 ? `scale(${fine(1 + 2.2 * co)})` : "";
     show(from, 1 - co);
     if (!still.matches) blur(from, 10 * co);
     const li = ease(seg(te, E.latIn));
@@ -279,7 +281,7 @@
     const sl = ease(seg(te, E.slide));
     const pos = [lerp(C[0], D.tile.x, sl), lerp(C[1], D.tile.y, sl)];
     EN.tile.style.opacity = te >= E.morph[0] ? 1 : 0;
-    EN.tile.setAttribute("transform", `translate(${fx(pos[0])} ${fx(pos[1])}) scale(${fx(lerp(k0, k1, m))})`);
+    EN.tile.setAttribute("transform", `translate(${fx(pos[0])} ${fx(pos[1])}) scale(${fine(lerp(k0, k1, m))})`);
     EN.frame.setAttribute("rx", fx(lerp(19, 1.5, m)));
     EN.core.style.opacity = fx(1 - m);
     const ce = seg(te, E.cells);
@@ -323,7 +325,7 @@
     const D = OP.D, C = [DATA.beats[0].W / 2, DATA.beats[0].H / 2];
     const cells = beats[beats.length - 1].cells;
     const co = ease(seg(to, O.cellOut));
-    cells.style.transform = co > 0.001 ? `scale(${fx(1 + 0.8 * co)})` : "";
+    cells.style.transform = co > 0.001 ? `scale(${fine(1 + 0.8 * co)})` : "";
     show(cells, 1 - co);
     if (!still.matches) blur(cells, 10 * co);
     const oi = ease(seg(to, O.in));

@@ -570,6 +570,7 @@ const FAB_JS = `
   const lerp = (a, b, t) => a + (b - a) * t;
   const lerpLog = (a, b, t) => Math.exp(lerp(Math.log(a), Math.log(b), t));
   const f3 = (v) => Math.round(v * 1000) / 1000;
+  const fine = (v) => Math.round(v * 1e6) / 1e6; // zoom keeps more digits: a rounded zoom jolts the whole view
   let t = 0, playing = false, visible = false, frame = 0, last = 0, started = false, shown = -1;
 
   function text(i) {
@@ -631,9 +632,9 @@ const FAB_JS = `
     // on a narrow stage the view is cropped at the sides, so pull back further
     const OVERS = D.over.s * (narrow ? Math.min(1, box.width / box.height / (D.W / D.H)) : 1);
     if (t > END) { const lastA = D.anchors[ST[N - 1].m0]; p = [lerp(lastA[0], D.over.c[0], o), lerp(lastA[1], D.over.c[1], o)]; s = lerpLog(BASE, OVERS, o); }
-    cam.setAttribute("transform", "translate(" + f3(C[0] - s * p[0]) + " " + f3(C[1] - s * p[1]) + ") scale(" + f3(s) + ")");
+    cam.setAttribute("transform", "translate(" + f3(C[0] - s * p[0]) + " " + f3(C[1] - s * p[1]) + ") scale(" + fine(s) + ")");
     const lp = ease(clamp((t - END - OVER * 0.7) / LOOP));
-    if (lp > 0) { const nearS = D.close.s * (narrow ? Math.min(1, box.width / box.height / (D.W / D.H)) : 1); p = [lerp(p[0], D.close.c[0], lp), lerp(p[1], D.close.c[1], lp)]; s = lerpLog(s, nearS, lp); cam.setAttribute("transform", "translate(" + f3(C[0] - s * p[0]) + " " + f3(C[1] - s * p[1]) + ") scale(" + f3(s) + ")"); }
+    if (lp > 0) { const nearS = D.close.s * (narrow ? Math.min(1, box.width / box.height / (D.W / D.H)) : 1); p = [lerp(p[0], D.close.c[0], lp), lerp(p[1], D.close.c[1], lp)]; s = lerpLog(s, nearS, lp); cam.setAttribute("transform", "translate(" + f3(C[0] - s * p[0]) + " " + f3(C[1] - s * p[1]) + ") scale(" + fine(s) + ")"); }
     verify.style.opacity = lp > 0 ? 1 : 0;
     verify.style.strokeDashoffset = f3(1 - lp);
     verify.style.strokeDasharray = lp > 0 ? (f3(lp) + " 1") : "0 1";
