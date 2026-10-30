@@ -157,7 +157,7 @@ function heroSection(home, hero, figs, site) {
       id: obj.id, n, W: obj.W, H: obj.H, titles: o.titles, copy: [o.object, o.chip, o.cell],
       objFocus: obj.focus, restC: obj.restC, restZ: obj.restZ, objZoom: obj.zoom, objPx: r2(obj.P.scale * UNIT), objUm: r2(obj.umPerUnit),
       dieFit: Math.round((obj.chipW * obj.P.scale * 1e4) / (die.matchW * die.P.scale)) / 1e4, dieAnchor: die.anchor, dieCentre: die.centre, dieFocus: die.focus, planZoom: r2(Math.min(36, needed) / 1.9), diePx: r2(die.P.scale * UNIT), dieUmPerWorld: r2(die.umPerWorld), planPx: die.planScale, dieUm: F.die.dieUm,
-      cellFit: cells.fit, cellOrigin: cells.origin, cellFocus: cells.focus, cellZoom: cells.zoom,
+      cellFit: cells.fit, cellOrigin: cells.origin, cellFocus: cells.focus, cellZoom: cells.zoom, flip: cells.flip,
     };
   });
   const open = openChipScene({ site });

@@ -367,6 +367,19 @@ function schematic(type, ox, oy, cell) {
       line(`M${X(last) + 30} ${pY + 26}V${nY - 26}M${X(last) + 30} ${Y(137)}H${X(cell.w) + 34}`);
       node(X(last) + 30, Y(137));
       label(X(cell.w) + 44, Y(141), "Y", "start");
+      if (type === "inv") {
+        // The rails, and the paths the runtime lights: in from A, down from power, out to ground.
+        const x = X(last), mid = Y(137), railUp = Y(0), railDown = Y(ROW);
+        line(`M${x + 30} ${railUp}V${pY - 26}M${x + 30} ${nY + 26}V${railDown}`);
+        const flip = (name, d) => p.push(`<path class="flip ${name}" pathLength="1" d="${d}"/>`);
+        flip("flip-in", `M${x - 36} ${mid}V${pY}H${x - 16}`);
+        flip("flip-in", `M${x - 36} ${mid}V${nY}H${x - 1}`);
+        flip("flip-up", `M${x + 30} ${railUp}V${pY - 26}H${x + 9}V${pY + 26}H${x + 30}V${mid}H${X(cell.w) + 34}`);
+        flip("flip-down", `M${x + 30} ${mid}V${nY - 26}H${x + 9}V${nY + 26}H${x + 30}V${railDown}`);
+        const bit = (cx, name) => p.push(`<g class="bit" data-bit="${name}" transform="translate(${r2(cx)} ${mid})"><g class="bit-face">${[1, 0].map((v) => `<g class="bit-${v}"><rect x="-22" y="-22" width="44" height="44" rx="5"/><text y="10">${v}</text></g>`).join("")}</g></g>`);
+        bit(x - 98, "a");
+        bit(X(cell.w) + 90, "y");
+      }
       if (type === "nand2") {
         // PMOS in parallel (both drains to Y), NMOS in series.
         line(`M${X(g[0]) + 30} ${pY + 26}V${Y(112)}H${X(last) + 30}`);
@@ -446,6 +459,7 @@ export function cellScene(spec, { W = 900, H = 640 } = {}) {
     focus: [r2(fcx), r2(fcy)],
     zoom: r2(closeScale),
     umPerUnit: 0.01,
+    flip: spec.cell === "inv",
     body: `<g class="cells">${rows3}</g><rect class="cell-halo" x="${f.x - 6}" y="${fy - 30}" width="${f.w + 12}" height="${ROW + 60}" fill="none" stroke="var(--lay-poly)" stroke-width="1.4"/>${sch}`,
     label: spec.cellLabel,
   };

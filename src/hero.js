@@ -28,24 +28,30 @@
   // Between the last object and the end card: an open chip, signed in its metal.
   const O = { cellOut: [0, 1.2], in: [0.4, 1.4], spot: [1.2, 3.4], zoom: [3.2, 5.4] };
   const OPEN_LEN = DATA.open ? 6.6 : 0;
-  const OPEN_AT = BEAT * (DATA.beats.length - 1) + SEG.sch[1] + 0.6;
+  // A circuit that runs gets extra seconds on screen, on top of its object's beat.
+  const FLIP = { closer: [-0.6, 1.0], ready: [0, 0.4], rise: [1.2, 1.6], fall: [1.5, 2.0], unrise: [3.4, 3.8], unfall: [3.7, 4.2], end: 5.0 };
+  const HOLD = DATA.beats.map((b) => (b.flip ? FLIP.end - (SEG.out[0] - SEG.sch[1]) : 0));
+  const AT = HOLD.reduce((at, h, i) => [...at, at[i] + BEAT + h], [0]); // when each object starts
+  const LAST = DATA.beats.length - 1;
+  const OPEN_AT = AT[LAST] + HOLD[LAST] + SEG.sch[1] + 0.6;
   const END_AT = OPEN_AT + OPEN_LEN;
   const TOTAL = END_AT + END_LEN;
   // Each button covers its part of the sequence: one object, or the open chip through to the end card.
-  const starts = chips.map((c) => (c.dataset.jump === "open" ? OPEN_AT : Number(c.dataset.jump) * BEAT));
+  const starts = chips.map((c) => (c.dataset.jump === "open" ? OPEN_AT : AT[Number(c.dataset.jump)]));
   const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
   const seg = (t, [a, b]) => clamp((t - a) / (b - a));
   const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
   const lerp = (a, b, t) => a + (b - a) * t;
   const fx = (v) => Math.round(v * 1000) / 1000;
 
-  const beats = DATA.beats.map((b) => {
+  const beats = DATA.beats.map((b, i) => {
     const q = (sel) => stage.querySelector(sel);
     const obj = q(`[data-layer="${b.id}"]`);
     const die = q(`[data-layer="${b.id}-die"]`);
     const cells = q(`[data-layer="${b.id}-cells"]`);
     return {
       ...b,
+      hold: HOLD[i],
       obj,
       die,
       cells,
@@ -64,6 +70,13 @@
       cellHalo: cells.querySelector(".cell-halo"),
       sch: [...cells.querySelectorAll(".sch")],
       schDots: [...cells.querySelectorAll(".sch-n,.sch-b,.sch-t")],
+      wires: b.flip && {
+        in: [...cells.querySelectorAll(".flip-in")],
+        up: cells.querySelector(".flip-up"),
+        down: cells.querySelector(".flip-down"),
+        a: cells.querySelector('[data-bit="a"]'),
+        y: cells.querySelector('[data-bit="y"]'),
+      },
     };
   });
 
@@ -123,6 +136,24 @@
     if (text) caption.timer = setTimeout(() => { capEl.textContent = text; capEl.classList.add("on"); }, 220);
   }
 
+  // The inverter runs: A goes to 1 and Y drains to 0 through the lower transistor;
+  // A goes back to 0 and Y fills from the power rail through the upper one.
+  function drawFlip(w, s) {
+    const ready = ease(seg(s, FLIP.ready));
+    const a = ease(seg(s, FLIP.rise)) * (1 - ease(seg(s, FLIP.unrise)));
+    const y = 1 - ease(seg(s, FLIP.fall)) * (1 - ease(seg(s, FLIP.unfall)));
+    w.in.forEach((el) => (el.style.strokeDashoffset = fx(1 - a)));
+    w.up.style.strokeDashoffset = fx(1 - y * ready);
+    w.down.style.strokeDashoffset = fx(y);
+    // Each bit turns over like a tile, showing its new value on the way back.
+    for (const [el, v] of [[w.a, a], [w.y, y]]) {
+      el.style.opacity = fx(ready);
+      el.querySelector(".bit-face").setAttribute("transform", `scale(1 ${fx(Math.abs(2 * v - 1))})`);
+      el.querySelector(".bit-1").style.opacity = v > 0.5 ? 1 : 0;
+      el.querySelector(".bit-0").style.opacity = v > 0.5 ? 0 : 1;
+    }
+  }
+
   function drawBeat(b, t, cssScale) {
     const W = b.W, H = b.H, C = [W / 2, H / 2];
     // Object stage.
@@ -169,19 +200,22 @@
     // Cell stage.
     const xc = seg(t, SEG.x2);
     const c = ease(seg(t, SEG.cell));
-    const settle = 1 + 0.045 * ease(seg(t, [SEG.cell[1], BEAT])); // keep drifting in while the schematic draws
-    const sCell = b.cellFit * Math.exp(Math.log(b.cellZoom) * c) * settle;
+    const settle = 1 + 0.045 * ease(seg(t, [SEG.cell[1], BEAT + b.hold])); // keep drifting in while the schematic draws
+    const closer = b.wires ? ease(seg(t - SEG.sch[1], FLIP.closer)) : 0; // lean in while the circuit runs
+    const sCell = b.cellFit * Math.exp(Math.log(b.cellZoom) * c) * settle * (1 + 0.3 * closer);
     const p0 = [(C[0] - b.cellOrigin[0]) / b.cellFit, (C[1] - b.cellOrigin[1]) / b.cellFit];
     const vc = ease(clamp(seg(t, SEG.cell) * 1.4));
     const pc = [lerp(p0[0], b.cellFocus[0], vc), lerp(p0[1], b.cellFocus[1], vc)];
     camAt(b.cellCam, sCell, pc, C);
     const d = ease(seg(t, SEG.sch));
-    b.cellBody.style.opacity = fx(1 - 0.5 * d);
+    b.cellBody.style.opacity = fx(1 - 0.5 * d - 0.26 * closer);
     b.cellHalo.style.opacity = fx(clamp(c * 2));
     b.sch.forEach((el, i) => { el.style.strokeDashoffset = fx(1 - clamp(d * 1.3 - i * 0.02)); });
     b.schDots.forEach((el) => (el.style.opacity = fx(clamp(d * 2 - 0.8))));
-    const out = b.n === beats.length ? 0 : seg(t, SEG.out); // the last object hands over to the end card instead
-    if (b.n === beats.length && t * 1 + BEAT * (b.n - 1) >= OPEN_AT) return; // drawOpen owns the cell layer from here
+    if (b.wires) drawFlip(b.wires, t - SEG.sch[1]);
+    const outAt = SEG.out.map((v) => v + b.hold);
+    const out = b.n === beats.length ? 0 : seg(t, outAt); // the last object hands over to the end card instead
+    if (b.n === beats.length && t + AT[LAST] >= OPEN_AT) return; // drawOpen owns the cell layer from here
     show(b.cells, xc * (1 - out));
     if (!still.matches) blur(b.cells, 9 * (1 - ease(xc)) + 6 * ease(out));
 
@@ -189,7 +223,7 @@
     const stageIndex = t < SEG.x1[0] + 0.35 ? 0 : t < SEG.x2[0] + 0.3 ? 1 : 2;
     figEl.textContent = `Fig ${b.n}.${"abc"[stageIndex]}`;
     titleEl.textContent = b.titles[stageIndex];
-    const capKey = t < 1.2 || (t >= SEG.out[0] && b.n < beats.length) ? "" : t < SEG.x1[0] ? 0 : t < SEG.x2[0] ? 1 : 2;
+    const capKey = t < 1.2 || (t >= outAt[0] && b.n < beats.length) ? "" : t < SEG.x1[0] ? 0 : t < SEG.x2[0] ? 1 : 2;
     if (capKey === "") caption("");
     else caption(`${b.id}${capKey}`, b.copy[capKey]);
     let pxPerUm;
@@ -306,8 +340,9 @@
 
   function render() {
     const cssScale = cssScaleNow();
-    const i = Math.min(DATA.beats.length - 1, Math.floor(t / BEAT));
-    const local = t - i * BEAT;
+    let i = LAST;
+    while (i > 0 && t < AT[i]) i--;
+    const local = t - AT[i];
     beats.forEach((b, j) => {
       if (j === i) drawBeat(b, local, cssScale);
       else { show(b.obj, 0); show(b.die, 0); show(b.cells, 0); }
@@ -350,7 +385,7 @@
   new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; run(); }, { threshold: 0.15 }).observe(stage);
   document.addEventListener("visibilitychange", () => { visible = !document.hidden; run(); });
 
-  window.__hero = { seek: (s) => { finale(false); t = s; capIndex = null; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, SEG, END_AT, TOTAL };
+  window.__hero = { seek: (s) => { finale(false); t = s; capIndex = null; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, AT, FLIP, SEG, END_AT, TOTAL };
   if (still.matches) finale(true);
   else { render(); run(); }
 })();
