@@ -277,7 +277,7 @@ function aboutSection(home) {
 <section class="block about gutter" id="about" aria-labelledby="about-title">
   <div class="wrap">
     ${sectionHead("about-title", home.about_eyebrow, home.about_title, home.about_text, "", home.about_emphasis)}
-    ${aud ? `<div class="aud-network"><svg class="aud-traces" viewBox="0 0 200 280" preserveAspectRatio="none" aria-hidden="true"><path d="M0 52 H34 L83 123 M200 52 H166 L117 123 M0 228 H34 L83 157 M200 228 H166 L117 157"/></svg><span class="aud-dot dot-tl" aria-hidden="true"></span><span class="aud-dot dot-tr" aria-hidden="true"></span><span class="aud-dot dot-bl" aria-hidden="true"></span><span class="aud-dot dot-br" aria-hidden="true"></span><span class="aud-hub" aria-hidden="true">${markSvg(C.site, 64)}</span><ul class="aud">${aud}</ul></div>` : ""}
+    ${aud ? `<div class="aud-network"><svg class="aud-traces" viewBox="0 0 200 280" preserveAspectRatio="none" aria-hidden="true"><path d="M0 52 H50 V140 H100 M200 52 H150 V140 H100 M0 228 H50 V140 H100 M200 228 H150 V140 H100"/></svg><span class="aud-dot dot-tl" aria-hidden="true"></span><span class="aud-dot dot-tr" aria-hidden="true"></span><span class="aud-dot dot-bl" aria-hidden="true"></span><span class="aud-dot dot-br" aria-hidden="true"></span><span class="aud-hub" aria-hidden="true">${markSvg(C.site, 96)}</span><ul class="aud">${aud}</ul></div>` : ""}
     ${join ? `<h3 class="join-title">${esc(home.join_title ?? "Get involved")}</h3><ul class="join">${join}</ul>` : ""}
   </div>
 </section>`;
