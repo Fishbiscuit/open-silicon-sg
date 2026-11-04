@@ -41,7 +41,7 @@ const S = {
   home: {
     hero_eyebrow: "string", hero_title: "string", hero_emphasis: "string?", hero_lede: "text", hero_actions: "list?",
     events_eyebrow: "string?", events_title: "string", events_emphasis: "string?", events_intro: "text?",
-    exhibition_title: "string", exhibition_intro: "text?", exhibition_dates: "string?", exhibition_link: "url?", exhibition_link_label: "string?", exhibition_carousel_title: "string?", exhibition_all_label: "string?", exhibition_areas: "list?",
+    exhibition_title: "string", exhibition_intro: "text?", exhibition_dates: "string?", exhibition_link: "url?", exhibition_link_label: "string?", exhibition_details_link: "url?", exhibition_details_label: "string?", exhibition_carousel_title: "string?", exhibition_all_label: "string?", exhibition_areas: "list?",
     about_eyebrow: "string?", about_title: "string", about_emphasis: "string?", about_text: "text", audiences: "list?", join_title: "string?", join: "list?",
   },
   hero: { readout: "string?", open_title: "string?", open_label: "string?", open: "text?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
@@ -251,7 +251,7 @@ function assetUri(rel, where) {
 
 function exhibitionSection(home, exhibits) {
   if (home.exhibition_areas?.length) {
-    const extra = home.exhibition_dates ? `<p class="s-meta">${esc(home.exhibition_dates)}${home.exhibition_link ? `<a class="ex-directions" href="${esc(home.exhibition_link)}">${esc(home.exhibition_link_label ?? "Getting there")} ↗</a>` : ""}</p>` : "";
+    const extra = home.exhibition_dates ? `<p class="s-meta">${esc(home.exhibition_dates)}${home.exhibition_link ? `<a class="ex-directions" href="${esc(home.exhibition_link)}">${esc(home.exhibition_link_label ?? "Getting there")} ↗</a>` : ""}${home.exhibition_details_link ? `<a class="ex-directions" href="${esc(home.exhibition_details_link)}">${esc(home.exhibition_details_label ?? "Exhibition details")} ↗</a>` : ""}</p>` : "";
     const areas = home.exhibition_areas.map(a => `<a class="ex-area" href="${esc(a.href)}">${a.image && assetExists(a.image) ? `<span class="ex-area-image"><img src="${assetUri(a.image, "content/home.md")}" alt="" loading="lazy" decoding="async"></span>` : ""}<span class="ex-area-label"><span><b>${esc(a.label)}</b>${a.text ? `<small>${esc(a.text)}</small>` : ""}</span><span aria-hidden="true">→</span></span></a>`).join("");
     return `<section class="block exhibition gutter" id="exhibition" aria-labelledby="exhibition-title"><div class="wrap">${sectionHead("exhibition-title", "Exhibition", home.exhibition_title, home.exhibition_intro, extra)}<iframe class="ex-carousel" src="/ite3/?embed=carousel" title="${esc(home.exhibition_carousel_title ?? "Exhibition carousel")}" loading="lazy"></iframe><div class="ex-areas">${areas}</div><a class="ex-all" href="/ite3/#find">${esc(home.exhibition_all_label ?? "All exhibits")} <span aria-hidden="true">→</span></a></div></section>`;
   }

@@ -14,6 +14,8 @@ exhibition_title: In the Ether 3
 exhibition_dates: 3 October to 6 December 2026 · ArtScience Museum
 exhibition_link: https://www.marinabaysands.com/museum/plan-your-visit.html
 exhibition_link_label: Getting there
+exhibition_details_link: https://www.marinabaysands.com/museum/programmes/in-the-ether.html
+exhibition_details_label: Exhibition details
 exhibition_carousel_title: Explore the exhibition carousel
 exhibition_all_label: All exhibits
 exhibition_areas:

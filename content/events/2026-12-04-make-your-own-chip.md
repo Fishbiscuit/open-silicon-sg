@@ -5,5 +5,5 @@ start: 2026-12-04
 confirmed: true
 venue: ArtScience Museum
 summary: Design a chip on your laptop and test how it works.
-public: true
+public: false
 ---
