@@ -37,7 +37,7 @@ const TODAY = process.env.BUILD_DATE ?? new Date().toLocaleDateString("en-CA", {
 // "?" marks an optional field. Keep these short: a field becomes required
 // only when the page cannot be drawn without it.
 const S = {
-  site: { name: "string", wordmark: "string", wordmark_suffix: "string?", mark_symbol: "string?", mark_label: "string?", title: "string", nav: "list", footer: "text?", github: "url?", credits: "text", credits_label: "string?" },
+  site: { name: "string", wordmark: "string", wordmark_suffix: "string?", mark_symbol: "string?", mark_label: "string?", title: "string", social_description: "text?", social_image_alt: "text?", nav: "list", footer: "text?", github: "url?", credits: "text", credits_label: "string?" },
   home: {
     hero_eyebrow: "string", hero_title: "string", hero_emphasis: "string?", hero_lede: "text", hero_actions: "list?",
     events_eyebrow: "string?", events_title: "string", events_emphasis: "string?", events_intro: "text?",
@@ -320,7 +320,28 @@ ${schemeCss(options)}
 ${ISO_CSS}
 ${THEME_CSS}
 ${PAGE_CSS}`;
+// Preview crawlers can fetch the committed artwork without protected Vercel access.
+const socialImage = process.env.VERCEL_ENV === "preview" && /^[0-9a-f]{40}$/i.test(process.env.VERCEL_GIT_COMMIT_SHA ?? "")
+  ? `https://raw.githubusercontent.com/Fishbiscuit/open-silicon-sg/${process.env.VERCEL_GIT_COMMIT_SHA}/assets/social-card.png`
+  : "https://opensilicon.sg/social-card.png";
 const HEAD = (title) => `<title>${esc(title)}</title>${faviconLink(C.site)}
+<meta name="description" content="${esc(C.site.social_description)}">
+<link rel="canonical" href="https://opensilicon.sg/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="${esc(C.site.name)}">
+<meta property="og:title" content="${esc(title)}">
+<meta property="og:description" content="${esc(C.site.social_description)}">
+<meta property="og:url" content="https://opensilicon.sg/">
+<meta property="og:image" content="${esc(socialImage)}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${esc(C.site.social_image_alt)}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${esc(title)}">
+<meta name="twitter:description" content="${esc(C.site.social_description)}">
+<meta name="twitter:image" content="${esc(socialImage)}">
+<meta name="twitter:image:alt" content="${esc(C.site.social_image_alt)}">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600&display=swap">`;
@@ -345,9 +366,9 @@ const SCHEME_JS = `
   if (modes.includes(saved)) set(saved);
 })();`;
 
-function write(name, page) {
-  writeFileSync(OUT(`${name}.html`), page);
-  writeFileSync(OUT(`${name}-preview.html`), `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>${page}</body></html>`);
+function write(name, page, head = "") {
+  writeFileSync(OUT(`${name}.html`), head + page);
+  writeFileSync(OUT(`${name}-preview.html`), `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">${head}</head><body>${page}</body></html>`);
   console.log(`wrote out/${name}.html`, (page.length / 1024).toFixed(0), "KB");
 }
 
@@ -362,8 +383,7 @@ mkdirSync(OUT(""), { recursive: true });
 const figs = buildFigures(C.hero);
 const fab = fabScene({ copy: C.fab, site: C.site });
 
-write("site", `${HEAD(C.site.title)}
-<style>${BASE_CSS({ lightOnly: true })}${fab.css}</style>
+write("site", `<style>${BASE_CSS({ lightOnly: true })}${fab.css}</style>
 ${siteHeader(C.site)}
 <main>
 ${heroSection(C.home, C.hero, figs, C.site)}
@@ -376,5 +396,5 @@ ${siteFooter(C.site)}
 <script type="module">${readFileSync(join(HERE, "hero.js"), "utf8")}
 ${fab.js}
 ${readFileSync(join(HERE, "atmosphere.js"), "utf8")}
-${readFileSync(join(HERE, "highlight.js"), "utf8")}</script>`);
+${readFileSync(join(HERE, "highlight.js"), "utf8")}</script>`, HEAD(C.site.title));
 

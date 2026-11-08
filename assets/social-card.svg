@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+<rect width="1200" height="630" fill="#f5f4f0"/>
+<text x="76" y="89" fill="#202123" font-family="Helvetica,Arial,sans-serif" font-weight="600" font-size="26" letter-spacing="-.4">Open Silicon <tspan fill="#843b70">Singapore</tspan></text>
+<path d="M76 113H1124" stroke="#cdc9ce" stroke-width="2"/>
+<rect x="77" y="236" width="200" height="19" fill="#e6d4df"/>
+<text x="76" y="250" font-family="Helvetica,Arial,sans-serif" font-weight="700" font-size="72" letter-spacing="-3" fill="#202123">Anyone should be</text>
+<text x="76" y="328" font-family="Helvetica,Arial,sans-serif" font-weight="700" font-size="72" letter-spacing="-3" fill="#202123">able to make a chip.</text>
+<text x="79" y="400" font-family="Helvetica,Arial,sans-serif" font-size="26" fill="#2c2c31">We bring people together in Singapore to</text>
+<text x="79" y="439" font-family="Helvetica,Arial,sans-serif" font-size="26" fill="#2c2c31">design chips with open tools.</text>
+<g transform="translate(869 190) scale(6)"><style>.frame{fill:#f5f4f0;stroke:#202123;stroke-width:.32}.cells{fill:#202123}.g{fill:#843b70;font:600 6.6px Helvetica,Arial,sans-serif}</style><rect class="frame" x="1" y="1" width="38" height="38" rx="1.5"/><text class="g" x="5.2" y="10">SG</text><g class="cells"><rect x="8.22" y="12.40" width="5.55" height="3"/><rect x="14.22" y="12.40" width="2.55" height="3"/><rect x="17.23" y="12.40" width="5.55" height="3"/><rect x="8.22" y="16.05" width="5.55" height="3"/><rect x="8.22" y="19.70" width="2.55" height="3"/><rect x="11.22" y="19.70" width="2.55" height="3"/><rect x="14.22" y="19.70" width="5.55" height="3"/><rect x="20.23" y="19.70" width="2.55" height="3"/><rect x="17.23" y="23.35" width="2.55" height="3"/><rect x="20.23" y="23.35" width="2.55" height="3"/><rect x="8.22" y="27.00" width="2.55" height="3"/><rect x="11.22" y="27.00" width="5.55" height="3"/><rect x="17.23" y="27.00" width="5.55" height="3"/><rect x="26.23" y="12.40" width="2.55" height="3"/><rect x="29.23" y="12.40" width="2.55" height="3"/><rect x="26.23" y="19.70" width="2.55" height="3"/><rect x="29.23" y="19.70" width="2.55" height="3"/><rect x="26.23" y="23.35" width="2.55" height="3"/><rect x="29.23" y="23.35" width="2.55" height="3"/><rect x="26.23" y="27.00" width="2.55" height="3"/><rect x="29.23" y="27.00" width="2.55" height="3"/></g></g>
+<path d="M76 540H1124" stroke="#cdc9ce" stroke-width="2"/>
+<text x="77" y="584" font-family="Helvetica,Arial,sans-serif" font-size="20" letter-spacing="1" fill="#66616a">opensilicon.sg</text>
+</svg>

@@ -10,6 +10,7 @@ const a = config.analytics, s = config.speedInsights;
 const snippet = `<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};window.si=window.si||function(){(window.siq=window.siq||[]).push(arguments)};</script><script defer src="${attr(absolute(a.scriptSrc))}"${a.viewEndpoint ? ` data-view-endpoint="${attr(absolute(a.viewEndpoint))}"` : ''}${a.eventEndpoint ? ` data-event-endpoint="${attr(absolute(a.eventEndpoint))}"` : ''}></script><script defer src="${attr(absolute(s.scriptSrc))}"${s.endpoint ? ` data-endpoint="${attr(absolute(s.endpoint))}"` : ''}></script>`;
 const html = readFileSync('out/site-preview.html','utf8').replace('</body>',snippet+'</body>');
 mkdirSync('public',{recursive:true});writeFileSync('public/index.html',html);
+cpSync('assets/social-card.png', 'public/social-card.png');
 const companion = join(process.env.RELEASE_ASSET_ROOT || '', 'ite3');
 if (!process.env.RELEASE_ASSET_ROOT || !existsSync(join(companion, 'index.html')) || !existsSync(join(companion, 'aerolamp/index.html'))) throw new Error('Pinned companion bundle is missing');
 {

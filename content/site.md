@@ -5,6 +5,8 @@ wordmark_suffix: SG
 mark_symbol: Si
 mark_label: SG
 title: Open Silicon SG
+social_description: We bring people together in Singapore to design chips with open tools and work towards making them.
+social_image_alt: Open Silicon Singapore. Anyone should be able to make a chip. The SG Si tile appears beside the headline.
 github: https://github.com/Fishbiscuit/open-silicon-sg
 nav:
   - label: Events
