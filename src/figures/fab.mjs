@@ -17,7 +17,7 @@ const XS = Array.from({ length: N }, (_, i) => i * SP);
 
 
 
-export function fabScene({ W = 1200, H = 560, copy, site }) {
+export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "" }) {
   // The first five machines (quartz to wafer) play as one quick step; the
   // hub's part of the story, from Design onwards, gets a step per machine.
   const STEPS = [{ m0: 0, m1: 4 }, ...XS.slice(5).map((_, k) => ({ m0: k + 5, m1: k + 5 }))];
@@ -485,6 +485,24 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
 .fab-lens .lens-s{opacity:0;transition:opacity .45s var(--ease)}
 .fab-lens .lens-s.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.fab-lens .lens-s{transition:none}}
+.fab-check{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px 40px;align-items:center;margin:44px 0 0;padding-top:36px;border-top:1px solid var(--rule)}
+.check-stage{position:relative;aspect-ratio:1000/1111;width:100%;overflow:hidden;background:var(--lay-bg);border:1px solid var(--rule-strong);--cut:50%}
+.check-stage img,.check-stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.check-plan{clip-path:inset(0 0 0 var(--cut))}
+.check-plan .plate{fill:var(--lay-bg)}
+.check-plan .ring{fill:none;stroke:var(--lay-metal);stroke-opacity:.5;stroke-width:3}
+.check-plan .part{fill:var(--lay-cell);stroke:var(--lay-poly);stroke-width:3}
+.check-plan .part-tag rect{fill:var(--lay-poly)}
+.check-plan .part-tag text{fill:var(--on-accent);font:600 40px var(--body)}
+.check-line{position:absolute;top:0;bottom:0;left:var(--cut);width:2px;margin-left:-1px;background:var(--accent);pointer-events:none}
+.check-line::after{content:"";position:absolute;top:50%;left:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 3px var(--bg)}
+.check-tags{position:absolute;inset:auto 10px 10px;display:flex;justify-content:space-between;pointer-events:none;font:11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.check-tags span{padding:5px 7px;background:color-mix(in srgb,var(--bg) 86%,transparent);color:var(--text-strong)}
+.check-range{display:block;width:100%;height:44px;margin:6px 0 0;accent-color:var(--accent);cursor:ew-resize}
+.fab-check h3{margin:0 0 10px;font-size:22px;font-weight:600;letter-spacing:-.015em;color:var(--text-strong)}
+.fab-check p{margin:0 0 12px;max-width:52ch;color:var(--text)}
+.fab-check .check-credit{font-size:13px;color:var(--muted)}
+@media (max-width:860px){.fab-check{grid-template-columns:1fr}}
 .fab-corners{position:absolute;inset:14px 16px;pointer-events:none;font:11px/1 var(--mono);letter-spacing:.06em;color:var(--muted)}
 .fab-corners>span{position:absolute;white-space:nowrap}
 .fab-corners [data-fab-fig]{display:none}
@@ -525,6 +543,7 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
     <div class="ledger" role="group" aria-label="Jump to a step" style="--steps:${STATIONS.length}">
       ${STATIONS.map((st, i) => `<button type="button" data-step="${i}"${i === 0 ? ' class="pre"' : ""}><b>${String(i + 1).padStart(2, "0")}</b>${esc(st.name)}${i === 0 && copy.lead_note ? `<small>${esc(copy.lead_note)}</small>` : ""}</button>`).join("")}
     </div>
+    ${checkFigure(copy, checkImage)}
     <div class="fab-controls">
       <button type="button" class="btn" data-fab-pause aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10"/></svg><span>Pause</span></button>
       <button type="button" class="btn" data-fab-replay><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8a4.8 4.8 0 1 0 1.4-3.4M3 2.6v2.6h2.6"/></svg><span>Replay</span></button>
@@ -579,6 +598,29 @@ function lensSvg() {
     `<rect x="30" y="12" width="40" height="76" rx="6" fill="var(--anatomy-top)" stroke="var(--anatomy-hi)" stroke-width="1"/><rect x="32.6" y="14.6" width="34.8" height="70.8" rx="4" fill="var(--m-screen-top)"/><circle cx="50" cy="19" r="1.3" fill="var(--anatomy-mid)"/><rect x="41" y="40" width="18" height="18" rx="1.2" fill="none" stroke="var(--accent)" stroke-width="1.1"/><rect x="44.5" y="43.5" width="11" height="11" fill="var(--accent)" fill-opacity=".55"/>`,
   ];
   return `<div class="fab-lens" aria-hidden="true"><svg viewBox="0 0 100 100">${S.map((g, i) => `<g class="lens-s${i === 0 ? " on" : ""}" data-lens="${i}">${g}</g>`).join("")}</svg></div>`;
+}
+
+// A real die photograph and the plan of its parts, wiped with a slider.
+function checkFigure(copy, image) {
+  if (!image || !copy.check_parts?.length) return "";
+  const n = (v) => Math.round(v * 10) / 10;
+  const parts = copy.check_parts.map((p) => {
+    const [x, y, w, h] = p.rect.map(Number);
+    const tw = n(p.label.length * 40 * 0.58 + 24);
+    return `<rect class="part" x="${x}" y="${y}" width="${w}" height="${h}"/><g class="part-tag"><rect x="${x}" y="${y}" width="${tw}" height="54"/><text x="${x + 12}" y="${y + 41}">${esc(p.label)}</text></g>`;
+  }).join("");
+  return `<figure class="fab-check" data-check>
+      <div>
+        <div class="check-stage">
+          <img src="${image}" alt="" decoding="async">
+          <svg class="check-plan" viewBox="0 0 1000 1111" aria-hidden="true"><rect class="plate" width="1000" height="1111"/><rect class="ring" x="24" y="24" width="952" height="1063"/>${parts}</svg>
+          <div class="check-line" aria-hidden="true"></div>
+          <div class="check-tags" aria-hidden="true"><span>${esc(copy.check_photo_label ?? "")}</span><span>${esc(copy.check_plan_label ?? "")}</span></div>
+        </div>
+        <input class="check-range" type="range" min="0" max="100" value="50" aria-label="${esc(copy.check_slider ?? copy.check_title ?? "")}">
+      </div>
+      <figcaption>${copy.check_title ? `<h3>${esc(copy.check_title)}</h3>` : ""}${copy.check_text ? `<p>${esc(copy.check_text)}</p>` : ""}<p class="sr-only">${esc(copy.check_parts.map((p) => p.label).join(", "))}.</p>${copy.check_credit ? `<p class="check-credit">${esc(copy.check_credit)}</p>` : ""}</figcaption>
+    </figure>`;
 }
 
 function mulberry(a) {
@@ -720,6 +762,13 @@ const FAB_JS = `
     run();
   }, { threshold: 0.35 }).observe(fabStage);
   document.addEventListener("visibilitychange", () => { visible = !document.hidden && visible; run(); });
+  // The photograph-and-plan comparison under the line.
+  const check = root.querySelector("[data-check]");
+  if (check) {
+    const stage = check.querySelector(".check-stage"), range = check.querySelector(".check-range");
+    const set = () => { stage.style.setProperty("--cut", range.value + "%"); range.setAttribute("aria-valuetext", range.value + "% photograph"); };
+    range.addEventListener("input", set); set();
+  }
   window.__fab = { seek: (s) => { t = s; render(); }, pause: () => setPlaying(false), T0, END, TOTAL };
   if (still.matches) t = TOTAL;
   render();

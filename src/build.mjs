@@ -45,7 +45,7 @@ const S = {
     about_eyebrow: "string?", about_title: "string", about_emphasis: "string?", about_text: "text", audiences: "list?", join_title: "string?", join: "list?",
   },
   hero: { readout: "string?", scrub_label: "string?", flip_hint: "string?", open_title: "string?", open_label: "string?", open: "text?", open_layers: "list?", floorplan_labels: "map?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
-  fab: { eyebrow: "string", title: "string", title_emphasis: "string?", intro: "text", lead_note: "string?", readout: "string?", closing_label: "string", closing_title: "string", closing: "text", stations: "list" },
+  fab: { eyebrow: "string", title: "string", title_emphasis: "string?", intro: "text", lead_note: "string?", readout: "string?", closing_label: "string", closing_title: "string", closing: "text", stations: "list", check_image: "string?", check_title: "string?", check_text: "text?", check_slider: "string?", check_photo_label: "string?", check_plan_label: "string?", check_credit: "string?", check_parts: "list?" },
   proposal: { doc_label: "string", doc_date: "string", guide_title: "string", guide: "list", eyebrow: "string", title: "string", sub: "text", footer: "text" },
   section: { n: "string", id: "string", title: "string", claims: "list?", sitemap: "map?", timeline: "list?" },
   event: { title: "string", kind: "workshop|talk|symposium|showcase|milestone", start: "date", end: "date?", confirmed: "boolean", window: "string?", time: "string?", venue: "string?", with: "list?", audience: "list?", level: "beginner|intermediate|advanced|all?", signup: "url?", summary: "text", public: "boolean?", source: "string?" },
@@ -386,8 +386,7 @@ const HEAD = (title) => `<title>${esc(title)}</title>${faviconLink(C.site)}
 <meta name="twitter:image" content="${esc(socialImage)}">
 <meta name="twitter:image:alt" content="${esc(C.site.social_image_alt)}">
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;500;600&display=swap">`;
+`;
 // The scheme switch: Auto follows the device; a choice is remembered per browser.
 const SCHEME_JS = `
 (() => {
@@ -424,7 +423,7 @@ try {
 }
 mkdirSync(OUT(""), { recursive: true });
 const figs = buildFigures(C.hero);
-const fab = fabScene({ copy: C.fab, site: C.site });
+const fab = fabScene({ copy: C.fab, site: C.site, checkImage: C.fab.check_image && assetExists(C.fab.check_image) ? assetUri(C.fab.check_image, "content/fab.md") : "" });
 
 write("site", `<style>${BASE_CSS({ lightOnly: true })}${fab.css}</style>
 ${siteHeader(C.site)}

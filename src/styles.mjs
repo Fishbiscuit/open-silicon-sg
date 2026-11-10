@@ -2,7 +2,7 @@
 export const PAGE_CSS = `
 /* Layout: a framed stage for each motion study, then an editorial column with wide figure breaks. */
 :root{
-  --display:"Unbounded","ABC Areal","Helvetica Neue",Arial,sans-serif;
+  --display:"ABC Areal","Helvetica Neue",Helvetica,Arial,sans-serif; /* one family for the whole site (QZ, 10 Nov 2026) */
   --body:"ABC Areal","Helvetica Neue",Helvetica,Arial,sans-serif;
   --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --ease:cubic-bezier(.32,.72,0,1);
@@ -47,6 +47,11 @@ code{font:.88em var(--mono)}
 /* Outlines weigh more than the detail inside them. */
 .iso{--anatomy-weight:1px}
 .iso .iso-edge{stroke-width:1.4px}
+/* Headings in ABC Areal, set like the opening headline: heavier and tighter than body text. */
+.s-head h2,.fab-head h2,.doc-head h2{font-weight:600!important;letter-spacing:-.03em;line-height:1.02}
+.wordmark{font-weight:600!important;letter-spacing:-.01em!important}
+.join-title,.fab-cap strong,.sec-body h3,.end-name .nm{font-weight:600!important;letter-spacing:-.015em}
+.mark .g,.end-tile .g,.chip-metal .g,.chip-metal-sh .g,.fab-tile .g{font-weight:700!important}
 .iso-dots[data-tone="red"] circle{fill:var(--anatomy-red);opacity:1}
 .iso-dots[data-tone="lit"] circle{fill:var(--anatomy-lit);opacity:1}
 .hero .vignette,.hero .grain{display:none}
