@@ -7,9 +7,9 @@ stops with the file name and the problem if something is wrong.
 | What you want to change | Edit |
 |---|---|
 | Site name, short mark (the SG / Si tile), menu, footer | `site.md` |
-| Home page: headline, introduction, section titles, the exhibition's dates and area cards, who the hub is for | `home.md` |
-| Add or change a workshop or event | `events/` (copy `events/_template.md`) |
-| Opening sequence: captions for each object, the open chip, final line. Optional: `floorplan_labels` names the parts of each chip, and `open_layers` names the four sheets of the signed project. | `hero.md` |
+| Home page: headline, introduction, section titles, the exhibition's dates and area cards, who the hub is for. Optional: `hero_next_label` shows the next event with a sign-up link under the introduction (taken from `events/`), and `join` lists the "Get involved" links at the end. | `home.md` |
+| Add or change a workshop or event. Sessions with the same title, place, time, summary and sign-up link share one card that lists their dates. | `events/` (copy `events/_template.md`) |
+| Opening sequence: captions for each object, the open chip, final line. Optional: `floorplan_labels` names the parts of each chip, `open_layers` names the four sheets of the signed project, `scrub_label` adds the slider under the opening, and `flip_hint` is the note shown when a circuit's inputs can be tapped. | `hero.md` |
 | "Why open silicon": intro and the nine steps. Each step stays up longer the longer its text is. | `fab.md` |
 | Exhibit cards | `exhibits/` (copy `exhibits/_template.md`). These show only if `exhibition_areas` is removed from `home.md`; the page now shows the companion's carousel instead. |
 

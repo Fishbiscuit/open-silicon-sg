@@ -47,6 +47,8 @@ code{font:.88em var(--mono)}
 /* Outlines weigh more than the detail inside them. */
 .iso{--anatomy-weight:1px}
 .iso .iso-edge{stroke-width:1.4px}
+.iso-dots[data-tone="red"] circle{fill:var(--anatomy-red);opacity:1}
+.iso-dots[data-tone="lit"] circle{fill:var(--anatomy-lit);opacity:1}
 .hero .vignette,.hero .grain{display:none}
 .stage .layer{position:absolute;inset:0;opacity:0;visibility:hidden;will-change:opacity,transform}
 .stage .iso-svg,.fab-stage .iso-svg{width:100%;height:100%;overflow:hidden}
@@ -156,6 +158,36 @@ code{font:.88em var(--mono)}
 .caption{transition:opacity .55s var(--ease),transform .55s var(--ease),filter .55s var(--ease)}
 @media (prefers-reduced-motion:reduce){.keylight,.grain,.layer.lit .chip-glow{animation:none}.caption{filter:none}}
 .paused,.paused *{animation-play-state:paused!important}
+/* the next workshop, under the introduction */
+.hero-next{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px 18px;width:max-content;max-width:100%;margin:24px auto 0;padding:8px 8px 8px 18px;border:1px solid var(--rule);background:var(--surface);text-align:left}
+.hero-next p{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin:0}
+.hero-next-label{font:500 11px/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.hero-next b{font-weight:600;color:var(--text-strong)}
+.hero-next-when{font:13px/1.3 var(--mono);color:var(--text)}
+.hero-next-actions{display:flex;gap:6px}
+@media (max-width:520px){.hero-next{width:100%;padding:12px;justify-content:space-between}.hero-next-actions{width:100%}.hero-next-actions .btn{flex:1;justify-content:center}}
+/* repeat sessions share a card */
+.ev-dates{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px}
+.ev-date{display:inline-block;padding:3px 7px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--text-strong)}
+.ev-when small{display:block}
+/* the slider under the opening */
+.scrub{display:block;width:100%;height:44px;margin:4px 0 0;background:transparent;-webkit-appearance:none;appearance:none;cursor:pointer;accent-color:var(--accent)}
+.scrub::-webkit-slider-runnable-track{height:2px;background:linear-gradient(var(--rule-strong),var(--rule-strong))}
+.scrub::-moz-range-track{height:2px;background:var(--rule-strong)}
+.scrub::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;margin-top:-7px;border-radius:50%;background:var(--accent);border:3px solid var(--bg);box-shadow:0 0 0 1px var(--accent)}
+.scrub::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:var(--accent);border:3px solid var(--bg)}
+.scrub:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.scrub+.caption{margin-top:6px}
+/* circuits you can change */
+.bit.tap{cursor:pointer}
+.bit-hit{fill:transparent}
+.bit.tap:focus{outline:none}
+.bit.tap:focus-visible .bit-face rect{stroke:var(--focus);stroke-width:5px}
+.bit.tap .bit-face{transition:none}
+[data-corner="hint"]{bottom:0;right:0;opacity:0;transition:opacity .4s var(--ease);color:var(--accent);padding:6px 8px;margin:-6px -8px;background:color-mix(in srgb,var(--bg) 84%,transparent)}
+[data-corner="hint"].on{opacity:1}
+/* phones: a smaller headline and an edge-to-edge stage, so the drawing gets the screen */
+@media (max-width:520px){.hero h1{font-size:36px}.stage{width:100vw;margin-left:calc(50% - 50vw)}}
 /* events (generated from content/events) */
 .ev-group{display:grid;grid-template-columns:200px minmax(0,1fr);gap:12px 32px;border-top:1px solid var(--rule);padding-block:18px}
 .ev-group>h3{font:500 12px/1.2 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:6px 0 0}

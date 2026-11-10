@@ -2,6 +2,10 @@
 hero_eyebrow: Singapore's open silicon hub
 hero_title: Anyone should be able to make a chip
 hero_emphasis: Anyone
+# Under the introduction: the next event with a sign-up link, taken from
+# content/events. Leave hero_next_label out to hide it.
+hero_next_label: Next workshop
+hero_next_all: All dates
 hero_lede: >
   We bring people together in Singapore to design chips with open tools and
   work towards making them.
@@ -44,4 +48,17 @@ audiences:
     text: People who can share experience, tools and manufacturing knowledge.
   - name: Government
     text: People who can help grow access, skills and opportunities.
+# The closing "Get involved" links. Each points to something already on the
+# page or in the repository. Remove the list to hide the block.
+join_title: Get involved
+join:
+  - label: Come to a workshop
+    text: Design a chip on your laptop at ArtScience Museum.
+    href: "#events"
+  - label: Explore the exhibition
+    text: In the Ether 3 is open until 6 December 2026.
+    href: "#exhibition"
+  - label: Help build this site
+    text: The site is open source. Suggest a change on GitHub.
+    href: https://github.com/Fishbiscuit/open-silicon-sg
 ---

@@ -16,6 +16,8 @@
   const replay = root.querySelector("[data-replay]");
   const pauseBtn = root.querySelector("[data-pause]");
   const motes = root.querySelector("canvas.motes");
+  const scrub = root.querySelector("[data-scrub]");
+  const hint = root.querySelector("[data-flip-hint]");
   const still = matchMedia("(prefers-reduced-motion: reduce)");
 
   // Give each object and its captions more time without changing the end card.
@@ -95,6 +97,7 @@
         ...RUNS[b.flip],
         paths: [...cells.querySelectorAll(".flip")],
         bits: [...cells.querySelectorAll(".bit")].map((el) => ({ el, face: el.querySelector(".bit-face"), one: el.querySelector(".bit-1"), zero: el.querySelector(".bit-0") })),
+        manual: null,
       },
     };
   });
@@ -159,12 +162,14 @@
   const level = (s, changes) => changes.reduce((v, [at, to]) => lerp(v, to, ease(seg(s, [at, at + 0.4]))), 0);
   function drawRun(run, s) {
     const read = (at) => Object.fromEntries(Object.entries(run.inputs).map(([k, changes]) => [k, level(at, changes)]));
-    const vals = { ...read(s), ...run.nodes(read(s - 0.3)) };
-    const ready = ease(seg(s, [0, 0.4]));
+    // Once someone taps an input the circuit follows their values instead of the script.
+    const vals = run.manual ? { ...run.manual, ...run.nodes(run.manual) } : { ...read(s), ...run.nodes(read(s - 0.3)) };
+    const ready = run.manual ? 1 : ease(seg(s, [0, 0.4]));
     for (const el of run.paths) el.style.strokeDashoffset = fx(1 - vals[el.dataset.on] * ready);
     // Each bit turns over like a tile, showing its new value on the way back.
     for (const { el, face, one, zero } of run.bits) {
       const v = vals[el.dataset.bit];
+      if (el.dataset.name) { const label = `${el.dataset.name}: ${v > 0.5 ? 1 : 0}`; if (el._l !== label) { el.setAttribute("aria-label", label); el._l = label; } }
       el.style.opacity = fx(ready * (el.dataset.show ? vals[el.dataset.show] : 1));
       face.setAttribute("transform", `scale(1 ${fx(Math.abs(2 * v - 1))})`);
       one.style.opacity = v > 0.5 ? 1 : 0;
@@ -172,6 +177,7 @@
     }
   }
 
+  const stageNow = (b, t) => (t < SEG.x1[0] + 0.35 ? 0 : t < SEG.x2[0] + 0.3 ? 1 : 2);
   function drawBeat(b, raw, cssScale) {
     const t = warp(b.i, raw), s = raw - ACT_AT;
     const W = b.W, H = b.H, C = [W / 2, H / 2];
@@ -240,6 +246,7 @@
     b.sch.forEach((el, i) => { el.style.strokeDashoffset = fx(1 - clamp(d * 1.3 - i * 0.02)); });
     b.schDots.forEach((el) => (el.style.opacity = fx(clamp(d * 2 - 0.8))));
     if (b.run) drawRun(b.run, t - SEG.sch[1]);
+    if (hint) hint.classList.toggle("on", !!b.run && t > SEG.sch[1] + 0.4 && stageNow(b, t) === 2);
     const outAt = SEG.out.map((v) => v + b.hold);
     const out = b.n === beats.length ? 0 : seg(t, outAt); // the last object hands over to the end card instead
     if (b.n === beats.length && raw + AT[LAST] >= OPEN_AT) return; // drawOpen owns the cell layer from here
@@ -247,7 +254,7 @@
     if (!still.matches) blur(b.cells, 9 * (1 - ease(xc)) + 6 * ease(out));
 
     // Corners, caption and scale bar follow the stage that is in front.
-    const stageIndex = t < SEG.x1[0] + 0.35 ? 0 : t < SEG.x2[0] + 0.3 ? 1 : 2;
+    const stageIndex = stageNow(b, t);
     figEl.textContent = `Fig ${b.n}.${"abc"[stageIndex]}`;
     titleEl.textContent = b.titles[stageIndex];
     const capKey = t < 1.2 || (t >= outAt[0] && b.n < beats.length) ? "" : t < SEG.x1[0] ? 0 : t < SEG.x2[0] ? 1 : 2;
@@ -397,6 +404,7 @@
       if (j === i) drawBeat(b, local, cssScale);
       else { show(b.obj, 0); show(b.die, 0); show(b.cells, 0); }
     });
+    if (hint && (t >= OPEN_AT || done)) hint.classList.remove("on");
     if (t >= OPEN_AT) drawOpen(t - OPEN_AT, cssScale);
     else resetOpen();
     if (t >= END_AT) drawEnd(t - END_AT, cssScale);
@@ -404,6 +412,11 @@
     // Dust belongs to the room: it thins as the camera dives and returns with the end card.
     const inScene = warp(i, local);
     show(motes, t >= END_AT ? ease(seg(t - END_AT, E.name)) : ease(seg(inScene, SEG.in)) * (1 - ease(seg(inScene, SEG.zoom))));
+    if (scrub && !scrubbing) scrub.value = String(Math.round((t / TOTAL) * 1000));
+    if (scrub) {
+      const label = `${figEl.textContent.replace(/^Fig \S+\s*/, "")}${titleEl.textContent}`.trim();
+      if (scrub._v !== label) { scrub.setAttribute("aria-valuetext", label); scrub._v = label; }
+    }
     chips.forEach((c, j) => {
       const a = starts[j], b = starts[j + 1] ?? TOTAL;
       c.style.setProperty("--p", fx(clamp((t - a) / (b - a))));
@@ -431,13 +444,56 @@
     run();
   };
 
-  replay.addEventListener("click", () => { finale(false); t = 0; caption(""); render(); setPlaying(true); });
+  const clearManual = () => beats.forEach((b) => { if (b.run) b.run.manual = null; });
+  replay.addEventListener("click", () => { finale(false); clearManual(); t = 0; caption(""); render(); setPlaying(true); });
   pauseBtn.addEventListener("click", () => { if (done) { replay.click(); return; } setPlaying(!playing); });
-  chips.forEach((c, j) => c.addEventListener("click", () => { finale(false); t = starts[j] + 0.001; caption(""); render(); setPlaying(true); }));
+  chips.forEach((c, j) => c.addEventListener("click", () => { finale(false); clearManual(); t = starts[j] + 0.001; caption(""); render(); setPlaying(true); }));
+
+  // The slider: dragging holds the sequence at that moment; letting go leaves it paused there.
+  let scrubbing = false;
+  if (scrub) {
+    const to = () => {
+      const at = (Number(scrub.value) / 1000) * TOTAL;
+      if (at >= TOTAL - 0.01) { t = TOTAL; finale(true); return; }
+      if (done) finale(false);
+      t = at; capIndex = null; render();
+    };
+    scrub.addEventListener("pointerdown", () => { scrubbing = true; setPlaying(false); });
+    scrub.addEventListener("input", () => { if (playing) setPlaying(false); clearManual(); to(); });
+    const release = () => { scrubbing = false; };
+    scrub.addEventListener("pointerup", release);
+    scrub.addEventListener("pointercancel", release);
+    scrub.addEventListener("change", release);
+  }
+
+  // Tapping an input flips it; the circuit settles over half a second.
+  function flip(el) {
+    const b = beats.find((x) => x.cells.contains(el));
+    if (!b?.run) return;
+    const key = el.dataset.bit;
+    const run = b.run;
+    if (!run.manual) {
+      const s = warp(b.i, t - AT[b.i]) - SEG.sch[1];
+      run.manual = Object.fromEntries(Object.entries(run.inputs).map(([k, changes]) => [k, Math.round(level(s, changes))]));
+    }
+    setPlaying(false);
+    const from = run.manual[key], target = from > 0.5 ? 0 : 1, t0 = performance.now();
+    const step = (now) => {
+      const p = still.matches ? 1 : clamp((now - t0) / 500);
+      run.manual = { ...run.manual, [key]: lerp(from, target, ease(p)) };
+      render();
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+  stage.querySelectorAll(".bit.tap").forEach((el) => {
+    el.addEventListener("click", () => flip(el));
+    el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(el); } });
+  });
   new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; run(); }, { threshold: 0.15 }).observe(stage);
   document.addEventListener("visibilitychange", () => { visible = !document.hidden; run(); });
 
-  window.__hero = { seek: (s) => { finale(false); t = s; capIndex = null; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, AT, SEG, END_AT, TOTAL };
+  window.__hero = { seek: (s) => { finale(false); clearManual(); t = s; capIndex = null; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, AT, SEG, END_AT, TOTAL };
   if (still.matches) finale(true);
   else { render(); run(); }
 })();

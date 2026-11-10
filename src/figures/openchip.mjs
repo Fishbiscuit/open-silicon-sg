@@ -67,25 +67,31 @@ export function openChipScene({ site, layers = [], W = 900, H = 640 }) {
   for (let r = 0; r < ROWS; r++) out.push(box(sx + 6, rowY(r) + 6, SPINE - 20, TH - 12, "var(--lay-cell2)", ' fill-opacity=".8"'));
   out.push(box(sx + 4, y0, 2.4, ROWS * (TH + GAP) - GAP, "var(--lay-metal)", ' fill-opacity=".45"'), box(sx + SPINE - 14.4, y0, 2.4, ROWS * (TH + GAP) - GAP, "var(--lay-metal)", ' fill-opacity=".45"'));
 
+  // Shapes with the same look are drawn as one path, so the die stays light
+  // enough to animate: every tile still has its own layout. Rectangles that
+  // carry an outline keep a hairline at any zoom, as the <rect>s they replace did.
+  const B = new Map();
+  const add = (attrs, d) => { if (!B.has(attrs)) B.set(attrs, []); B.get(attrs).push(d); };
+  const rp = (x, y, w, h, fill, extra = "") => add(`fill="${fill}"${extra}${extra.includes("stroke=") ? ' vector-effect="non-scaling-stroke"' : ""}`, `M${n1(x)} ${n1(y)}h${n1(w)}v${n1(h)}h${n1(-w)}Z`);
+  const flush = () => { const out = [...B].map(([attrs, ds]) => `<path ${attrs} d="${ds.join("")}"/>`).join(""); B.clear(); return out; };
+  const WIRE = 'fill="none" stroke="var(--lay-m2)" stroke-width="1.1"';
   // Wiring on the upper metal: right-angled runs that end on vias.
   const routes = (x, y, ww, hh, n) => {
-    let s = "";
     for (let i = 0; i < n; i++) {
       const ax = x + 3 + R() * (ww - 6), ay = y + 3 + R() * (hh - 6), bx = x + 3 + R() * (ww - 6), by = y + 3 + R() * (hh - 6);
-      s += `<path d="M${n1(ax)} ${n1(ay)}H${n1(bx)}V${n1(by)}" fill="none" stroke="var(--lay-m2)" stroke-width="1.1"/>${box(ax - 0.7, ay - 0.7, 1.4, 1.4, "var(--lay-cont)", ' fill-opacity=".7"')}${box(bx - 0.7, by - 0.7, 1.4, 1.4, "var(--lay-cont)", ' fill-opacity=".7"')}`;
+      add(WIRE, `M${n1(ax)} ${n1(ay)}H${n1(bx)}V${n1(by)}`);
+      rp(ax - 0.7, ay - 0.7, 1.4, 1.4, "var(--lay-cont)", ' fill-opacity=".7"');
+      rp(bx - 0.7, by - 0.7, 1.4, 1.4, "var(--lay-cont)", ' fill-opacity=".7"');
     }
-    return s;
   };
   const straps = (x, y, ww, hh, pitch = 22) => {
-    let s = "";
-    for (let px = x + pitch / 2; px < x + ww - 2; px += pitch) s += box(px, y, 1.2, hh, "var(--lay-metal)", ' fill-opacity=".28"');
-    return s;
+    for (let px = x + pitch / 2; px < x + ww - 2; px += pitch) rp(px, y, 1.2, hh, "var(--lay-metal)", ' fill-opacity=".28"');
   };
   // A bank of finger transistors inside a guard ring.
   const fingers = (x, y, ww, hh) => {
-    let s = box(x, y, ww, hh, "var(--lay-diff)", ' stroke="var(--lay-diff-edge)" stroke-opacity=".5" stroke-width=".4"');
-    for (let fx = x + 1.6; fx < x + ww - 1; fx += 2.2) s += box(fx, y - 1, 0.7, hh + 2, "var(--lay-poly)", ' fill-opacity=".65"');
-    return s + box(x - 2, y - 2.4, ww + 4, hh + 4.8, "none", ' stroke="var(--lay-metal)" stroke-opacity=".4" stroke-width=".6"');
+    rp(x, y, ww, hh, "var(--lay-diff)", ' stroke="var(--lay-diff-edge)" stroke-opacity=".5" stroke-width=".4"');
+    for (let fx = x + 1.6; fx < x + ww - 1; fx += 2.2) rp(fx, y - 1, 0.7, hh + 2, "var(--lay-poly)", ' fill-opacity=".65"');
+    rp(x - 2, y - 2.4, ww + 4, hh + 4.8, "none", ' stroke="var(--lay-metal)" stroke-opacity=".4" stroke-width=".6"');
   };
 
   // the signed project: four tiles, left of the spine, a little below centre
@@ -96,38 +102,36 @@ export function openChipScene({ site, layers = [], W = 900, H = 640 }) {
   const project = (c, r, w, h) => {
     const x = colX(c), y = rowY(r), ww = w * TW + (w - 1) * GAP, hh = h * TH + (h - 1) * GAP;
     const kind = R();
-    let s;
     if (kind < 0.34) {
       // logic: rows of standard cells under power straps
-      s = box(x, y, ww, hh, std()) + straps(x, y, ww, hh) + routes(x, y, ww, hh, 2 + Math.floor(R() * 4));
+      rp(x, y, ww, hh, std()); straps(x, y, ww, hh); routes(x, y, ww, hh, 2 + Math.floor(R() * 4));
     } else if (kind < 0.52) {
       // memory beside its logic: an array with decoders on two edges
       const mw = ww * (0.42 + R() * 0.2), left = R() < 0.5, mx = left ? x + 3 : x + ww - mw - 3;
-      s = box(x, y, ww, hh, std()) + box(mx - 1.5, y + 1.5, mw + 3, hh - 3, "var(--lay-block)");
-      s += box(mx, y + 3, mw - 4, hh - 10, "url(#oc-sram)") + box(mx, y + hh - 6.5, mw - 4, 3.6, "var(--lay-cell)") + box(mx + mw - 3.4, y + 3, 3.4, hh - 10, "var(--lay-cell)");
-      s += routes(x, y, ww, hh, 2);
+      rp(x, y, ww, hh, std()); rp(mx - 1.5, y + 1.5, mw + 3, hh - 3, "var(--lay-block)");
+      rp(mx, y + 3, mw - 4, hh - 10, "url(#oc-sram)"); rp(mx, y + hh - 6.5, mw - 4, 3.6, "var(--lay-cell)"); rp(mx + mw - 3.4, y + 3, 3.4, hh - 10, "var(--lay-cell)");
+      routes(x, y, ww, hh, 2);
     } else if (kind < 0.68) {
       // analog: finger transistors, a capacitor array and a wide bus
       const cw = ww * (0.3 + R() * 0.2);
-      s = box(x, y, ww, hh, "var(--lay-block)") + box(x + 4, y + 4, cw, hh - 8, "url(#oc-cap)");
+      rp(x, y, ww, hh, "var(--lay-block)"); rp(x + 4, y + 4, cw, hh - 8, "url(#oc-cap)");
       const fx0 = x + cw + 10, fw = ww - cw - 16;
-      s += fingers(fx0, y + 7, fw, hh * 0.26) + fingers(fx0, y + hh * 0.56, fw * (0.5 + R() * 0.5), hh * 0.26);
-      s += box(x + 3, y + hh / 2 - 1.2, ww - 6, 2.4, "var(--lay-metal)", ' fill-opacity=".34"');
+      fingers(fx0, y + 7, fw, hh * 0.26); fingers(fx0, y + hh * 0.56, fw * (0.5 + R() * 0.5), hh * 0.26);
+      rp(x + 3, y + hh / 2 - 1.2, ww - 6, 2.4, "var(--lay-metal)", ' fill-opacity=".34"');
     } else if (kind < 0.82) {
       // a small design in a mostly empty tile
       const iw = ww * (0.35 + R() * 0.25), ih = Math.round((hh * (0.4 + R() * 0.3)) / ROW) * ROW;
       const ix = x + (R() < 0.5 ? 4 : ww - iw - 4), iy = y + Math.round((R() * (hh - ih - 4)) / ROW) * ROW;
-      s = box(x, y, ww, hh, "url(#oc-fill)") + box(ix, iy, iw, ih, std()) + box(ix, iy, iw, ih, "none", ' stroke="var(--lay-metal)" stroke-opacity=".4" stroke-width=".5"') + routes(ix, iy, iw, ih, 2);
+      rp(x, y, ww, hh, "url(#oc-fill)"); rp(ix, iy, iw, ih, std()); rp(ix, iy, iw, ih, "none", ' stroke="var(--lay-metal)" stroke-opacity=".4" stroke-width=".5"'); routes(ix, iy, iw, ih, 2);
     } else {
       // datapath: identical bit slices side by side
-      s = box(x, y, ww, hh, "var(--lay-block)");
+      rp(x, y, ww, hh, "var(--lay-block)");
       const slice = 5.5;
-      for (let bx = x + 3; bx < x + ww - 5; bx += slice) s += box(bx, y + 3, slice - 1.3, hh - 6, bx % 2 < 1 ? "var(--lay-cell)" : "var(--lay-cell2)") + box(bx + 1.2, y + 3, 0.4, hh - 6, "var(--lay-poly)", ' fill-opacity=".5"');
-      for (let by = y + 8; by < y + hh - 4; by += 9) s += box(x + 2, by, ww - 4, 0.9, "var(--lay-metal)", ' fill-opacity=".34"');
-      s += routes(x, y, ww, hh, 1);
+      for (let bx = x + 3; bx < x + ww - 5; bx += slice) { rp(bx, y + 3, slice - 1.3, hh - 6, bx % 2 < 1 ? "var(--lay-cell)" : "var(--lay-cell2)"); rp(bx + 1.2, y + 3, 0.4, hh - 6, "var(--lay-poly)", ' fill-opacity=".5"'); }
+      for (let by = y + 8; by < y + hh - 4; by += 9) rp(x + 2, by, ww - 4, 0.9, "var(--lay-metal)", ' fill-opacity=".34"');
+      routes(x, y, ww, hh, 1);
     }
-    s += `<rect x="${x}" y="${y}" width="${ww}" height="${hh}" fill="none" stroke="var(--lay-outline)" stroke-opacity=".55"/><rect class="glint" x="${x}" y="${y}" width="${ww}" height="${hh}"/>`;
-    return `<g class="proj">${s}</g>`;
+    return `<g class="proj">${flush()}<rect x="${x}" y="${y}" width="${ww}" height="${hh}" fill="none" stroke="var(--lay-outline)" stroke-opacity=".55"/><rect class="glint" x="${x}" y="${y}" width="${ww}" height="${hh}"/></g>`;
   };
   for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
     if (used.has(`${c},${r}`)) continue;
@@ -146,25 +150,29 @@ export function openChipScene({ site, layers = [], W = 900, H = 640 }) {
   const ax = colX(art.c), ay = rowY(art.r), aw = art.w * TW + GAP, ah = art.h * TH + GAP;
   const A = rand(7);
   const rowsN = Math.floor(ah / ROW);
-  const silicon = [], gates = [], wiring = [];
+  const cellsAt = [];
   for (let r = 0; r < rowsN; r++) {
     const yy = ay + r * ROW;
     let x = ax + 2;
     while (x < ax + aw - 4) {
       const w = Math.min(ax + aw - 2 - x, 3 + Math.floor(A() * 9));
-      if (A() < 0.86) {
-        silicon.push(box(x + 0.3, yy + 0.9, w - 0.6, 1.7, "var(--lay-diff)", ' stroke="var(--lay-diff-edge)" stroke-opacity=".45" stroke-width=".25"'), box(x + 0.3, yy + 3.1, w - 0.6, 1.5, "var(--lay-diff)", ' stroke="var(--lay-diff-edge)" stroke-opacity=".45" stroke-width=".25"'));
-        for (let g = 1.1; g < w - 0.8; g += 1.5) gates.push(box(x + g, yy + 0.6, 0.34, 4.3, "var(--lay-poly)"));
-      }
+      if (A() < 0.86) cellsAt.push([x, yy, w]);
       x += w;
     }
-    wiring.push(box(ax + 1, yy - 0.3, aw - 2, 0.7, "var(--lay-metal)", ' fill-opacity=".5"'));
   }
+  const DIFF = ' stroke="var(--lay-diff-edge)" stroke-opacity=".45" stroke-width=".25"';
+  for (const [x, yy, w] of cellsAt) { rp(x + 0.3, yy + 0.9, w - 0.6, 1.7, "var(--lay-diff)", DIFF); rp(x + 0.3, yy + 3.1, w - 0.6, 1.5, "var(--lay-diff)", DIFF); }
+  const silicon = flush();
+  for (const [x, yy, w] of cellsAt) for (let g = 1.1; g < w - 0.8; g += 1.5) rp(x + g, yy + 0.6, 0.34, 4.3, "var(--lay-poly)");
+  const gates = flush();
+  for (let r = 0; r < rowsN; r++) rp(ax + 1, ay + r * ROW - 0.3, aw - 2, 0.7, "var(--lay-metal)", ' fill-opacity=".5"');
   for (let i = 0; i < 16; i++) {
     const px = ax + 4 + A() * (aw - 8), py = ay + 4 + A() * (ah - 8), qx = ax + 4 + A() * (aw - 8), qy = ay + 4 + A() * (ah - 8);
-    wiring.push(`<path d="M${n1(px)} ${n1(py)}H${n1(qx)}V${n1(qy)}" fill="none" stroke="var(--lay-m2)" stroke-width="1.2"/>${box(px - 0.8, py - 0.8, 1.6, 1.6, "var(--lay-cont)", ' fill-opacity=".75"')}${box(qx - 0.8, qy - 0.8, 1.6, 1.6, "var(--lay-cont)", ' fill-opacity=".75"')}`);
+    add('fill="none" stroke="var(--lay-m2)" stroke-width="1.2"', `M${n1(px)} ${n1(py)}H${n1(qx)}V${n1(qy)}`);
+    rp(px - 0.8, py - 0.8, 1.6, 1.6, "var(--lay-cont)", ' fill-opacity=".75"'); rp(qx - 0.8, qy - 0.8, 1.6, 1.6, "var(--lay-cont)", ' fill-opacity=".75"');
   }
-  for (let px = ax + 17; px < ax + aw - 4; px += 34) wiring.push(box(px, ay + 1, 1.6, ah - 2, "var(--lay-metal)", ' fill-opacity=".34"'));
+  for (let px = ax + 17; px < ax + aw - 4; px += 34) rp(px, ay + 1, 1.6, ah - 2, "var(--lay-metal)", ' fill-opacity=".34"');
+  const wiring = flush();
   const ts = (ah - 10) / 40;
   const tx = ax + (aw - 40 * ts) / 2, ty = ay + 5;
   const place = (cls, dx = 0, dy = 0) => `<g class="${cls}" transform="translate(${(tx + dx).toFixed(2)} ${(ty + dy).toFixed(2)}) scale(${ts.toFixed(4)})">${tileBody(site)}</g>`;
@@ -173,7 +181,7 @@ export function openChipScene({ site, layers = [], W = 900, H = 640 }) {
   const edge = `<rect class="art-edge" x="${ax}" y="${ay}" width="${aw}" height="${ah}"/>`;
   const sheet = (i, ink, base) => `<g class="art-l" data-l="${i}">${base ? box(ax, ay, aw, ah, "var(--lay-sub)") : back}<g class="art-ink">${ink}</g>${edge}</g>`;
   const labels = layers.slice(0, 4).map((t, i) => `<text class="art-lab" data-l="${i}" x="${n1(ax + aw + 9)}" y="${n1(ay + ah / 2 + 1.8)}">${esc(t)}</text>`).join("");
-  out.push(`<g class="art-proj"><rect class="art-scrim" x="${-DW}" y="${-DH}" width="${DW * 3}" height="${DH * 3}"/>${sheet(0, silicon.join(""), true)}${sheet(1, gates.join(""))}${sheet(2, wiring.join(""))}${sheet(3, metal)}<rect class="art-ring" x="${ax}" y="${ay}" width="${aw}" height="${ah}" fill="none" stroke="var(--lay-poly)"/>${labels}</g>`);
+  out.push(`<g class="art-proj"><rect class="art-scrim" x="${-DW}" y="${-DH}" width="${DW * 3}" height="${DH * 3}"/>${sheet(0, silicon, true)}${sheet(1, gates)}${sheet(2, wiring)}${sheet(3, metal)}<rect class="art-ring" x="${ax}" y="${ay}" width="${aw}" height="${ah}" fill="none" stroke="var(--lay-poly)"/>${labels}</g>`);
 
   // fit the die to the stage
   const fit = Math.min(W / DW, H / DH) * 0.94;

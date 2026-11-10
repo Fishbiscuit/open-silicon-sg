@@ -33,7 +33,7 @@ export function cookerScene({ W = 900, H = 640 } = {}) {
   const well = k.onTop(k.circleRing(0, 0, 108.4, 96), BODY_TOP, P, true);
   body.push(`<clipPath id="ck-well"><path d="${well}"/></clipPath><path d="${well}" fill="var(--ck-well)"/>`);
   const inside = [];
-  inside.push(S(G.disc(28, 34, 92, up(0, 0, 0), P), { tone: "mid" }));
+  inside.push(S(G.disc(28, 34, 92, up(0, 0, 0), P), { mat: "hot", tone: "mid" })); // the heating plate: the one warm part
   const coil = [];
   for (let t = 0; t < Math.PI * 2 * 4.2; t += 0.12) coil.push([Math.cos(t) * (24 + t * 2.4), Math.sin(t) * (24 + t * 2.4)]);
   inside.push(L(k.onTop(coil, 34, P), { className: "cu" }));
@@ -81,7 +81,7 @@ export function cookerScene({ W = 900, H = 640 } = {}) {
   // four buttons and two status lamps
   const buttons = [-36, -12, 12, 36];
   buttons.forEach((x) => body.push(S(G.disc(9.5, 12.5, 7, G.frameOf(onPanelWorld(panelO, out, side, x, -18), out, side, [0, 0, 1]), P), { tone: "mid" })));
-  body.push(D([onPanel(-36, -32), onPanel(36, -32)], { size: 1.6, tone: "hi" }));
+  body.push(D([onPanel(-36, -32)], { size: 1.6, tone: "red" }), D([onPanel(36, -32)], { size: 1.6, tone: "lit" })); // status lamps: heating, keep warm
   body.push(`<path d="${panelPath([[-30, -34], [-14, -34]]) + panelPath([[18, -34], [30, -34]])}" class="iso-line" data-tone="lo" data-free=""/>`);
 
   // ---- heating plate is part of the body; the pot lifts out.

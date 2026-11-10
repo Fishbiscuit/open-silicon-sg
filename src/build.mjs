@@ -39,12 +39,12 @@ const TODAY = process.env.BUILD_DATE ?? new Date().toLocaleDateString("en-CA", {
 const S = {
   site: { name: "string", wordmark: "string", wordmark_suffix: "string?", mark_symbol: "string?", mark_label: "string?", title: "string", social_description: "text?", social_image_alt: "text?", nav: "list", footer: "text?", github: "url?", credits: "text", credits_label: "string?" },
   home: {
-    hero_eyebrow: "string", hero_title: "string", hero_emphasis: "string?", hero_lede: "text", hero_actions: "list?",
+    hero_eyebrow: "string", hero_title: "string", hero_emphasis: "string?", hero_lede: "text", hero_actions: "list?", hero_next_label: "string?", hero_next_all: "string?",
     events_eyebrow: "string?", events_title: "string", events_emphasis: "string?", events_intro: "text?",
     exhibition_title: "string", exhibition_intro: "text?", exhibition_dates: "string?", exhibition_link: "url?", exhibition_link_label: "string?", exhibition_details_link: "url?", exhibition_details_label: "string?", exhibition_carousel_title: "string?", exhibition_all_label: "string?", exhibition_areas: "list?",
     about_eyebrow: "string?", about_title: "string", about_emphasis: "string?", about_text: "text", audiences: "list?", join_title: "string?", join: "list?",
   },
-  hero: { readout: "string?", open_title: "string?", open_label: "string?", open: "text?", open_layers: "list?", floorplan_labels: "map?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
+  hero: { readout: "string?", scrub_label: "string?", flip_hint: "string?", open_title: "string?", open_label: "string?", open: "text?", open_layers: "list?", floorplan_labels: "map?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
   fab: { eyebrow: "string", title: "string", title_emphasis: "string?", intro: "text", lead_note: "string?", readout: "string?", closing_label: "string", closing_title: "string", closing: "text", stations: "list" },
   proposal: { doc_label: "string", doc_date: "string", guide_title: "string", guide: "list", eyebrow: "string", title: "string", sub: "text", footer: "text" },
   section: { n: "string", id: "string", title: "string", claims: "list?", sitemap: "map?", timeline: "list?" },
@@ -145,7 +145,22 @@ function siteHeader(site) {
 </header>`;
 }
 
-function heroSection(home, hero, figs, site) {
+// The next session people can sign up for, from content/events.
+function nextSignup(events) {
+  const next = upcomingSessions(events).find((s) => s.data.signup);
+  if (!next) return "";
+  const dates = next.dates.filter((d) => d >= TODAY).sort();
+  const a = day(dates[0]);
+  return { title: next.data.title, signup: next.data.signup, date: `${a.d} ${MONTHS[a.m - 1]}`, time: next.data.time, more: dates.length - 1 };
+}
+function heroNext(home, events) {
+  const n = home.hero_next_label ? nextSignup(events) : "";
+  if (!n) return "";
+  const when = [n.date, n.time].filter(Boolean).map(esc).join(" · ");
+  return `<div class="hero-next"><p><span class="hero-next-label">${esc(home.hero_next_label)}</span><b>${esc(n.title)}</b><span class="hero-next-when">${when}</span></p><div class="hero-next-actions"><a class="btn prime" href="${esc(n.signup)}" target="_blank" rel="noopener">Sign up</a>${n.more > 0 && home.hero_next_all ? `<a class="btn" href="#events">${esc(home.hero_next_all)}</a>` : ""}</div></div>`;
+}
+
+function heroSection(home, hero, figs, site, events = []) {
   const layers = [];
   const beats = figs.map(({ o, n, obj, die, cells, F }) => {
     const glow = `<circle class="chip-glow" cx="${obj.focus[0]}" cy="${obj.focus[1]}" r="70" fill="url(#glow-${obj.id})"/>`;
@@ -173,6 +188,7 @@ function heroSection(home, hero, figs, site) {
     <div class="hero-copy">
       <h1 id="hero-title">${headline}</h1>
       <p class="lede">${inline(home.hero_lede)}</p>
+      ${heroNext(home, events)}
       ${actions ? `<div class="hero-actions">${actions}</div>` : ""}
     </div>
     <div class="stage-wrap">
@@ -184,8 +200,10 @@ function heroSection(home, hero, figs, site) {
           <span data-corner="fig">Fig 1.a</span><span data-corner="title">${esc(figs[0].o.titles[0])}</span>
           <span class="scalebar" data-corner="scale"><i></i><span></span></span>
           ${hero.readout ? `<span data-corner="readout">${esc(hero.readout)}</span>` : ""}
+          ${hero.flip_hint ? `<span data-corner="hint" data-flip-hint>${esc(hero.flip_hint)}</span>` : ""}
         </div>
       </div>
+      ${hero.scrub_label ? `<input class="scrub" type="range" min="0" max="1000" step="1" value="0" aria-label="${esc(hero.scrub_label)}" data-scrub>` : ""}
       <p class="caption" aria-hidden="true"></p>
       <div class="controls">
         <div class="chips" role="group" aria-label="Jump to an object">
@@ -216,13 +234,38 @@ function when(e) {
 }
 const sectionHead = (id, eyebrow, title, intro, extra = "", emphasis = "") => `<div class="s-head"><div>${eyebrow ? `<p class="eyebrow">${esc(eyebrow)}</p>` : ""}<h2 id="${id}">${emphasise(title, emphasis)}</h2></div><div class="s-intro">${intro ? `<p>${inline(intro)}</p>` : ""}${extra}</div></div>`;
 
+// Repeat sessions (same title, place, time, summary and sign-up, one day each)
+// share one card that lists their dates. Anything else keeps its own card.
+const lastDay = (e) => e.data.end ?? e.data.start;
+function sessions(events) {
+  const out = [], byKey = new Map();
+  for (const e of events) {
+    const d = e.data;
+    const single = d.confirmed && (!d.end || d.end === d.start) && !e.body?.trim();
+    const key = single ? JSON.stringify([d.title, d.kind, d.summary, d.venue ?? "", d.time ?? "", d.signup ?? "", d.with ?? [], d.level ?? ""]) : null;
+    if (key && byKey.has(key)) { byKey.get(key).dates.push(d.start); continue; }
+    const s = { ...e, dates: [d.start] };
+    if (key) byKey.set(key, s);
+    out.push(s);
+  }
+  return out;
+}
+function sessionWhen(e, dates) {
+  if (dates.length < 2) return when(e);
+  const sorted = [...dates].sort(), years = new Set(sorted.map((d) => d.slice(0, 4)));
+  const chip = (iso) => { const a = day(iso); return `<span class="ev-date">${a.d} ${MONTHS[a.m - 1]}${years.size > 1 ? ` ${a.y}` : ""}</span>`; };
+  return `<span class="ev-when"><span class="ev-dates">${sorted.map(chip).join("")}</span>${years.size === 1 ? `<small>${[...years][0]}${e.time ? ` · ${esc(e.time)}` : ""}</small>` : e.time ? `<small>${esc(e.time)}</small>` : ""}</span>`;
+}
+function upcomingSessions(events) {
+  return sessions(events.filter((e) => lastDay(e) >= TODAY).sort((a, b) => a.data.start.localeCompare(b.data.start)));
+}
+
 function eventsSection(home, events) {
-  const last = (e) => e.data.end ?? e.data.start;
-  const upcoming = events.filter((e) => last(e) >= TODAY).sort((a, b) => a.data.start.localeCompare(b.data.start));
-  const past = events.filter((e) => last(e) < TODAY).sort((a, b) => b.data.start.localeCompare(a.data.start));
-  const item = ({ data: e, body }) => {
+  const upcoming = upcomingSessions(events);
+  const past = sessions(events.filter((e) => lastDay(e) < TODAY).sort((a, b) => b.data.start.localeCompare(a.data.start)));
+  const item = ({ data: e, body, dates }) => {
     const meta = [e.venue, e.with?.length ? `with ${e.with.join(", ")}` : "", e.level ? `${e.level} level` : ""].filter(Boolean).join(" · ");
-    return `<li class="ev">${when(e)}<div class="ev-main"><h4>${esc(e.title)}</h4><p>${inline(e.summary)}</p>${meta ? `<p class="ev-meta">${esc(meta)}</p>` : ""}${body ? `<div class="ev-body">${markdown(body)}</div>` : ""}${e.signup ? `<a class="btn prime ev-signup" href="${esc(e.signup)}" target="_blank" rel="noopener">Sign up</a>` : ""}</div><span class="ev-kind" data-kind="${e.kind}">${e.kind}</span></li>`;
+    return `<li class="ev${dates.length > 1 ? " ev-series" : ""}">${sessionWhen(e, dates)}<div class="ev-main"><h4>${esc(e.title)}</h4><p>${inline(e.summary)}</p>${meta ? `<p class="ev-meta">${esc(meta)}</p>` : ""}${body ? `<div class="ev-body">${markdown(body)}</div>` : ""}${e.signup ? `<a class="btn prime ev-signup" href="${esc(e.signup)}" target="_blank" rel="noopener">Sign up</a>` : ""}</div><span class="ev-kind" data-kind="${e.kind}">${e.kind}</span></li>`;
   };
   const next = upcoming.slice(0, 3);
   const more = upcoming.slice(3);
@@ -386,7 +429,7 @@ const fab = fabScene({ copy: C.fab, site: C.site });
 write("site", `<style>${BASE_CSS({ lightOnly: true })}${fab.css}</style>
 ${siteHeader(C.site)}
 <main>
-${heroSection(C.home, C.hero, figs, C.site)}
+${heroSection(C.home, C.hero, figs, C.site, C.events)}
 ${fab.html}
 ${eventsSection(C.home, C.events)}
 ${exhibitionSection(C.home, C.exhibits)}

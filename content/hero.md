@@ -12,6 +12,10 @@ floorplan_labels:
   flash: Flash memory
   analog: Analog
   phy: Input and output
+# The slider under the opening (its accessible name), and the note shown
+# when a circuit can be changed by tapping its inputs. Leave out to hide.
+scrub_label: Move through the opening
+flip_hint: Tap an input to change it
 # The signed project's sheets, from the bottom up. Leave out for no labels.
 open_layers: [Silicon, Gates, Wiring, Top metal]
 crystal_title: Silicon crystal · element 14

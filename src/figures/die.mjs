@@ -347,7 +347,9 @@ function schematic(type, ox, oy, cell) {
   const label = (x, y, t, anchor = "middle") => p.push(`<text class="sch-t" x="${r2(x)}" y="${r2(y)}" text-anchor="${anchor}">${t}</text>`);
   const node = (x, y) => p.push(`<circle class="sch-n" cx="${r2(x)}" cy="${r2(y)}" r="5.5"/>`);
   const run = (on, d, ground) => p.push(`<path class="flip${ground ? " flip-down" : ""}" data-on="${on}" pathLength="1" d="${d}"/>`);
-  const bit = (cx, cy, key, show = "") => p.push(`<g class="bit" data-bit="${key}"${show ? ` data-show="${show}"` : ""} transform="translate(${r2(cx)} ${r2(cy)})"><g class="bit-face">${[1, 0].map((v) => `<g class="bit-${v}"><rect x="-22" y="-22" width="44" height="44" rx="5"/><text y="10">${v}</text></g>`).join("")}</g></g>`);
+  // Inputs (a, b, and the stored bit q) can be tapped; the hit area is wider than the tile.
+  const TAP = { a: "Input A", b: "Input B", q: "Stored bit" };
+  const bit = (cx, cy, key, show = "") => p.push(`<g class="bit${TAP[key] ? " tap" : ""}" data-bit="${key}"${show ? ` data-show="${show}"` : ""}${TAP[key] ? ` data-name="${TAP[key]}" role="button" tabindex="0"` : ""} transform="translate(${r2(cx)} ${r2(cy)})">${TAP[key] ? `<rect class="bit-hit" x="-60" y="-60" width="120" height="120"/>` : ""}<g class="bit-face">${[1, 0].map((v) => `<g class="bit-${v}"><rect x="-22" y="-22" width="44" height="44" rx="5"/><text y="10">${v}</text></g>`).join("")}</g></g>`);
   const fet = (x, y, pmos, dir = 1) => {
     // channel, gate plate, and the source/drain stubs; dir -1 mirrors it
     const at = (v) => x + dir * v;
