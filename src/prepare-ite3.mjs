@@ -6,7 +6,7 @@ import path from 'node:path';
 const source = path.resolve(process.argv[2] || '../ite3-companion-publish/dist');
 const target = path.resolve('out/vercel-release/ite3');
 const roots = new Set(readdirSync(source));
-const marker = 'a09456cb4340';
+const marker = '8f9bafd5415e';
 // The scoped worker must see staging changes as a new generation even when
 // the upstream companion itself has not changed.
 const scopedBuild = `${marker}-${createHash('sha256').update(readFileSync(new URL(import.meta.url))).digest('hex').slice(0, 8)}`;
