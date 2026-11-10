@@ -42,7 +42,11 @@ code{font:.88em var(--mono)}
 .hero-note{font:12px/1.4 var(--mono);color:var(--muted);margin-top:28px;letter-spacing:.04em}
 /* The stage, caption and controls fit one screen: about 232px goes to the header, caption and controls, and 1.40625 is the stage's 900/640 shape. */
 .stage-wrap{min-width:0;width:100%;max-width:960px;max-width:clamp(480px,(100vh - 232px) * 1.40625,960px);max-width:clamp(480px,(100svh - 232px) * 1.40625,960px);margin:0 auto}
-.stage{position:relative;aspect-ratio:900/640;width:100%;background:radial-gradient(55% 55% at 55% 52%,var(--stage-glow),transparent 72%);overflow:hidden}
+/* The subject stands on a pool a shade darker than the page, so white parts read against it. */
+.stage{position:relative;aspect-ratio:900/640;width:100%;background:radial-gradient(62% 60% at 52% 56%,var(--stage-pool,var(--stage-glow)),transparent 76%);overflow:hidden}
+/* Outlines weigh more than the detail inside them. */
+.iso{--anatomy-weight:1px}
+.iso .iso-edge{stroke-width:1.4px}
 .hero .vignette,.hero .grain{display:none}
 .stage .layer{position:absolute;inset:0;opacity:0;visibility:hidden;will-change:opacity,transform}
 .stage .iso-svg,.fab-stage .iso-svg{width:100%;height:100%;overflow:hidden}
@@ -75,6 +79,7 @@ code{font:.88em var(--mono)}
 .corners>[data-corner]{position:absolute;white-space:nowrap}
 [data-corner="fig"]{display:none}
 [data-corner="title"]{top:0;right:0;text-transform:uppercase;letter-spacing:.12em}
+.corners>[data-corner="title"],.corners>[data-corner="scale"],.fab-corners>span{padding:6px 8px;margin:-6px -8px;border-radius:2px;background:color-mix(in srgb,var(--bg) 84%,transparent)}
 [data-corner="scale"]{bottom:0;left:0;display:flex;align-items:center;gap:10px;color:var(--text)}
 .scalebar i{display:block;height:6px;border:1px solid currentColor;border-top:0;width:0;transition:width .25s linear}
 [data-corner="readout"]{bottom:0;right:0}
@@ -93,16 +98,30 @@ code{font:.88em var(--mono)}
 .btn.prime{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
 
 /* open chip: shared die, the signed project */
-.chip-art .frame{fill:none;stroke:var(--lay-metal);stroke-width:1.5px}
-.chip-art .cells rect{fill:var(--lay-metal)}
-.chip-art .g{font:500 6.6px var(--display);fill:var(--lay-poly)}
-.chip-art .s{font:500 15px var(--display);fill:var(--lay-metal)}
+.chip-metal .frame{fill:none;stroke:var(--lay-metal);stroke-width:.7px;vector-effect:none}
+.chip-metal .cells rect{fill:url(#oc-slot)}
+.chip-metal .g{font:500 6.6px var(--display);fill:var(--lay-poly)}
+.chip-metal .s{font:500 15px var(--display);fill:var(--lay-metal)}
+.chip-metal-sh{opacity:.2}
+.chip-metal-sh .frame{fill:none;stroke:var(--lay-cont);stroke-width:.7px;vector-effect:none}
+.chip-metal-sh .cells rect,.chip-metal-sh .g,.chip-metal-sh .s{fill:var(--lay-cont)}
+.chip-metal-sh .g{font:500 6.6px var(--display)}
+.chip-metal-sh .s{font:500 15px var(--display)}
 .art-ring{stroke-width:1px}
-.open-die.spot .proj:nth-child(7n+2) rect:first-child{animation:proj 1.6s ease-in-out infinite}
-.open-die.spot .proj:nth-child(11n+5) rect:first-child{animation:proj 1.6s ease-in-out .5s infinite}
-.open-die.spot .proj:nth-child(13n+9) rect:first-child{animation:proj 1.6s ease-in-out 1s infinite}
-@keyframes proj{0%,100%{fill-opacity:1}50%{fill:var(--lay-poly);fill-opacity:.85}}
-@media (prefers-reduced-motion:reduce){.open-die.spot .proj rect:first-child{animation:none}}
+.fp-labs{opacity:0}
+.fp-labs rect{fill:var(--lay-sub);fill-opacity:.9;stroke:var(--lay-outline);stroke-opacity:.5;stroke-width:1px}
+.fp-labs text{font:500 34px var(--mono);letter-spacing:.02em;fill:var(--text-strong)}
+@media (max-width:620px){.fp-labs{display:none}.art-lab{font-size:8.4px}}
+.art-scrim{fill:var(--bg);opacity:0;pointer-events:none}
+.art-back{fill:var(--lay-sub);opacity:0}
+.art-edge{fill:none;stroke:var(--lay-outline);stroke-width:1px;opacity:0}
+.art-lab{font:500 5.8px var(--mono);letter-spacing:.04em;fill:var(--text-strong);opacity:0}
+.glint{fill:var(--lay-poly);opacity:0;pointer-events:none}
+.open-die.spot .proj:nth-child(7n+2) .glint{animation:proj 1.6s ease-in-out infinite}
+.open-die.spot .proj:nth-child(11n+5) .glint{animation:proj 1.6s ease-in-out .5s infinite}
+.open-die.spot .proj:nth-child(13n+9) .glint{animation:proj 1.6s ease-in-out 1s infinite}
+@keyframes proj{0%,100%{opacity:0}50%{opacity:.34}}
+@media (prefers-reduced-motion:reduce){.open-die.spot .proj .glint{animation:none}}
 /* end card: crystal, tile, trace, name */
 .layer.end .bonds{fill:none;stroke:var(--silver);stroke-width:1px}
 .layer.end .atoms circle{fill:var(--text-strong)}

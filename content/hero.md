@@ -4,6 +4,16 @@ open_label: Open chip
 open: >
   Many designs can share a chip. When a design is published, anyone can
   inspect its layers. Designers can sign their work in the metal.
+# Names for the parts of each chip's floorplan, by kind of block. Leave a
+# kind out to leave it unnamed. The floorplans are illustrative.
+floorplan_labels:
+  std: Logic
+  sram: Memory
+  flash: Flash memory
+  analog: Analog
+  phy: Input and output
+# The signed project's sheets, from the bottom up. Leave out for no labels.
+open_layers: [Silicon, Gates, Wiring, Top metal]
 crystal_title: Silicon crystal · element 14
 crystal: >
   Silicon atoms form a crystal. In this view, neighbouring atoms sit

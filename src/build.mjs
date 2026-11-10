@@ -44,7 +44,7 @@ const S = {
     exhibition_title: "string", exhibition_intro: "text?", exhibition_dates: "string?", exhibition_link: "url?", exhibition_link_label: "string?", exhibition_details_link: "url?", exhibition_details_label: "string?", exhibition_carousel_title: "string?", exhibition_all_label: "string?", exhibition_areas: "list?",
     about_eyebrow: "string?", about_title: "string", about_emphasis: "string?", about_text: "text", audiences: "list?", join_title: "string?", join: "list?",
   },
-  hero: { readout: "string?", open_title: "string?", open_label: "string?", open: "text?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
+  hero: { readout: "string?", open_title: "string?", open_label: "string?", open: "text?", open_layers: "list?", floorplan_labels: "map?", crystal_title: "string?", crystal: "text?", finale_title: "string", finale: "text", end_line: "string?", summary: "text", objects: "list" },
   fab: { eyebrow: "string", title: "string", title_emphasis: "string?", intro: "text", lead_note: "string?", readout: "string?", closing_label: "string", closing_title: "string", closing: "text", stations: "list" },
   proposal: { doc_label: "string", doc_date: "string", guide_title: "string", guide: "list", eyebrow: "string", title: "string", sub: "text", footer: "text" },
   section: { n: "string", id: "string", title: "string", claims: "list?", sitemap: "map?", timeline: "list?" },
@@ -129,7 +129,7 @@ function buildFigures(hero) {
   return hero.objects.map((o, i) => {
     const F = FIGURES[o.figure];
     const obj = F.scene();
-    const die = dieScene({ ...F.die, azimuth: obj.P.azimuth, label: `${o.titles[1]}: the package with its lid lifted, the bond wires, and the die whose floorplan flattens into a plan view.` });
+    const die = dieScene({ ...F.die, labels: hero.floorplan_labels, azimuth: obj.P.azimuth, label: `${o.titles[1]}: the package with its lid lifted, the bond wires, and the die whose floorplan flattens into a plan view.` });
     const cells = cellScene({ ...F.cell, cellLabel: `${o.titles[2]}: rows of standard cells, one highlighted, with its transistor schematic drawn over the layout.` });
     return { o, n: i + 1, obj, die, cells, F };
   });
@@ -160,7 +160,7 @@ function heroSection(home, hero, figs, site) {
       tap: obj.tap, cellFit: cells.fit, cellOrigin: cells.origin, cellFocus: cells.focus, cellZoom: cells.zoom, flip: cells.flip,
     };
   });
-  const open = openChipScene({ site });
+  const open = openChipScene({ site, layers: hero.open_layers ?? [] });
   layers.push(layer("open", 'data-layer="open"', { ...open, id: "open" }));
   const end = endScene({ site, hero });
   layers.push(layer("end", 'data-layer="end"', { ...end, id: "end" }));

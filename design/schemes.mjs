@@ -19,18 +19,18 @@ const ITE3 = {
 const paper = {
   plate: "#eeebe5", // fixed light ground for exhibit photographs and cutouts
   "plate-ink": "#5d5862",
-  "mote": "rgba(70,60,52,.22)", "mote-blend": "multiply", key: "rgba(255,255,255,.95)", "key-blend": "normal", "grain-blend": "multiply",
+  "mote": "rgba(70,60,52,.12)", "mote-blend": "multiply", key: "rgba(255,255,255,.6)", "key-blend": "normal", "grain-blend": "multiply",
   // page
   bg: ITE3.paper, "bg-raised": ITE3.panel, surface: "#ffffff", text: "#2c2c31", "text-strong": ITE3.ink, muted: ITE3.muted, rule: ITE3.line, "rule-strong": ITE3.pewter,
   accent: ITE3.plum, "accent-soft": "#f1e5ee", "on-accent": "#ffffff", energy: ITE3.navy, heat: ITE3.orange, silver: ITE3.pewter, focus: ITE3.plum,
-  stage: "#eeebe5", "stage-glow": "rgba(255,255,255,.85)", "stage-edge": "rgba(32,33,35,.06)", "hero-glow-1": "rgba(255,255,255,.9)", "hero-glow-2": "rgba(132,59,112,.07)", beam: "rgba(255,255,255,.55)", grain: ".05", vignette: "rgba(120,112,104,.16)",
+  stage: "#eeebe5", "stage-pool": "#e1dcd4", "stage-glow": "rgba(255,255,255,.85)", "stage-edge": "rgba(32,33,35,.06)", "hero-glow-1": "rgba(255,255,255,.9)", "hero-glow-2": "rgba(132,59,112,.07)", beam: "rgba(255,255,255,.55)", grain: ".05", vignette: "rgba(120,112,104,.16)",
   // figure tones (Anatomy)
   "anatomy-page": ITE3.paper, "anatomy-card": "#eeebe5", "anatomy-text": ITE3.muted, "anatomy-strong": ITE3.ink, "anatomy-muted": "#8a858e",
   "anatomy-paper": "#f3f1ec", "anatomy-face": "#ffffff", "anatomy-top": "#ffffff",
-  "anatomy-shade-0": "#cbc7cb", "anatomy-shade-1": "#d8d5d8", "anatomy-shade-2": "#e4e2e4", "anatomy-shade-3": "#efedee",
+  "anatomy-shade-0": "#bcb7bd", "anatomy-shade-1": "#ccc8cd", "anatomy-shade-2": "#dcd9dd", "anatomy-shade-3": "#eae8ea",
   "anatomy-lit-top": "#f6eaf2", "anatomy-lit-shade": "#e3c9d9",
-  "anatomy-hi": ITE3.ink, "anatomy-mid": "#7d7882", "anatomy-lo": ITE3.pewter, "anatomy-faint": "#d6d2d6", "anatomy-lit": ITE3.plum,
-  "anatomy-halo": "#6d6862", "anatomy-halo-opacity": ".3", "anatomy-dot": "#2a2a2e", "anatomy-red": ITE3.orange, "anatomy-green": "#286144", "anatomy-blue": ITE3.navy,
+  "anatomy-hi": ITE3.ink, "anatomy-mid": "#7d7882", "anatomy-lo": "#a29e9a", "anatomy-faint": "#c9c4ca", "anatomy-lit": ITE3.plum,
+  "anatomy-halo": "#6d6862", "anatomy-halo-opacity": ".44", "anatomy-dot": "#2a2a2e", "anatomy-red": ITE3.orange, "anatomy-green": "#286144", "anatomy-blue": ITE3.navy,
   // materials: top, dark side, light side, edge, crease
   "m-gold-top": "#ecdfbd", "m-gold-side": "#c4a76a", "m-gold-side2": "#d9c391", "m-gold-edge": "#7a5c22", "m-gold-crease": "#a1813f",
   "m-die-top": "#ead4e1", "m-die-side": "#b48aa3", "m-die-side2": "#cfaec2", "m-die-edge": ITE3.plum, "m-die-crease": "#a8678f",

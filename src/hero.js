@@ -26,8 +26,9 @@
   const E = { cellOut: [0, 1.5], latIn: [0.5, 1.5], latZoom: [0.8, 4.2], pick: [3.6, 4.4], morph: [4.3, 5.7], cells: [5.4, 6.8], label: [6.5, 7.1], slide: [7.0, 8.4], trace: [7.3, 9.1], name: [8.1, 9.3] };
   const END_LEN = 10.4;
   // Between the last object and the end card: an open chip, signed in its metal.
-  const O = { cellOut: [0, 1.2], in: [0.4, 1.4], spot: [1.2, 3.4], zoom: [3.2, 5.4] };
-  const OPEN_LEN = DATA.open ? 6.6 : 0;
+  // After the zoom the signed project's sheets lift apart, hold, and settle again.
+  const O = { cellOut: [0, 1.2], in: [0.4, 1.4], spot: [1.2, 3.4], zoom: [3.2, 5.4], peel: [5.7, 6.9], settle: [8.7, 9.6] };
+  const OPEN_LEN = DATA.open ? 10 : 0;
   // What each circuit does once it's drawn: seconds after the schematic finishes,
   // each input listing [when, new value]. Everything else follows 0.3 s behind.
   const RUNS = {
@@ -84,6 +85,7 @@
       pkgBits: [...die.querySelectorAll(".pkg > *:not(.layout)")],
       lid: die.querySelector('[data-part="lid"]'),
       mark: die.querySelector(".focus-mark"),
+      fpLabs: die.querySelector(".fp-labs"),
       cellCam: cells.querySelector(".cam"),
       cellBody: cells.querySelector(".cells"),
       cellHalo: cells.querySelector(".cell-halo"),
@@ -98,7 +100,7 @@
   });
 
   const openLayer = stage.querySelector('[data-layer="open"]');
-  const OP = openLayer && { D: DATA.open, cam: openLayer.querySelector(".cam"), die: openLayer.querySelector(".open-die"), ring: openLayer.querySelector(".art-ring") };
+  const OP = openLayer && { D: DATA.open, cam: openLayer.querySelector(".cam"), die: openLayer.querySelector(".open-die"), ring: openLayer.querySelector(".art-ring"), scrim: openLayer.querySelector(".art-scrim"), sheets: [...openLayer.querySelectorAll(".art-l")].map((el) => ({ el, i: Number(el.dataset.l), ink: el.querySelector(".art-ink"), back: el.querySelector(".art-back"), edge: el.querySelector(".art-edge") })), labels: [...openLayer.querySelectorAll(".art-lab")] };
   const endLayer = stage.querySelector('[data-layer="end"]');
   const EN = endLayer && {
     D: DATA.end,
@@ -217,6 +219,8 @@
     for (const el of b.pkgBits) el.style.opacity = fx(pkgO);
     if (b.lid) b.lid.setAttribute("transform", `translate(0 ${fx(-60 * d1)})`), (b.lid.style.opacity = fx((1 - d1) * pkgO));
     if (b.mark) b.mark.style.opacity = fx(clamp(pz * 3) * (1 - clamp((pz - 0.7) * 4)));
+    // The parts are named once the floorplan lies flat, and the names go as the camera dives.
+    if (b.fpLabs) b.fpLabs.style.opacity = fx(clamp(m * 3 - 1.6) * (1 - clamp((pz - 0.14) * 5)));
     show(b.die, xd * (1 - seg(t, SEG.x2)));
     if (!still.matches) blur(b.die, 9 * ease(seg(t, SEG.x2)));
 
@@ -335,9 +339,26 @@
     OP.die.classList.toggle("spot", to > O.spot[0] && to < O.zoom[1]);
     const z = ease(seg(to, O.zoom));
     const art = [D.origin[0] + D.fit * D.artC[0], D.origin[1] + D.fit * D.artC[1]];
-    const s = Math.exp(Math.log(D.zoom) * z) * (1 + 0.03 * ease(seg(to, [0, O.zoom[0]])));
+    // The sheets: each tilts back about the project's centre and moves to its own height.
+    const K = D.peel, pe = lift(seg(to, O.peel)) * (1 - ease(seg(to, O.settle)));
+    const s = Math.exp(Math.log(D.zoom) * z) * (1 + 0.03 * ease(seg(to, [0, O.zoom[0]]))) * (1 - K.back * pe);
     camAt(OP.cam, s, [lerp(C[0], art[0], z), lerp(C[1], art[1], z)], C);
+    const cy = D.artC[1], sh = K.shear * pe, sq = 1 - (1 - K.squash) * pe;
+    const mid = (OP.sheets.length - 1) / 2;
+    for (const L of OP.sheets) {
+      const off = (mid - L.i) * K.gap * pe;
+      L.el.setAttribute("transform", `matrix(1 0 ${fine(sh)} ${fine(sq)} ${fx(-sh * cy)} ${fx(cy - sq * cy + off)})`);
+      L.ink.style.opacity = fx(lerp(K.rest[L.i] ?? 1, 1, pe));
+      if (L.back) L.back.style.opacity = fx(0.9 * pe);
+      L.edge.style.opacity = fx(pe);
+    }
+    OP.labels.forEach((el) => {
+      el.setAttribute("transform", `translate(0 ${fx((mid - Number(el.dataset.l)) * K.gap * pe)})`);
+      el.style.opacity = fx(clamp(pe * 2.2 - 1.2));
+    });
     OP.ring.style.strokeWidth = fx(1 + 2 * z) + "px";
+    OP.ring.style.opacity = fx(1 - pe);
+    OP.scrim.style.opacity = fx(0.8 * pe); // the neighbours step back while the sheets are apart
     figEl.textContent = `Fig ${beats.length + 1}`;
     titleEl.textContent = DATA.openTitle;
     scaleBar((D.fit * s * cssScale) / D.umPerUnit);

@@ -101,7 +101,7 @@ export function cardScene({ W = 900, H = 640 } = {}) {
     pts.push([CARD.x + CARD.w - 0.4, CARD.y + 30 + j * 4.2 + Math.sin((CARD.w - 0.4) / 22 + j * 0.35) * 5]);
     waves.push(k.onTop(pts, FZ + 1, P));
   }
-  front.push(L(waves.join(""), { tone: "lo" }));
+  front.push(L(waves.join(""), { tone: "blue" })); // the print carries the one colour on the card's face
   const numbers = { x: CARD.x + 12, y: CARD.y + CARD.d - 26, w: 74, d: 14, r: 1.5 };
   front.push(L(k.planOutline(numbers, FZ + 1, P, 3), { tone: "faint" }));
   [62, 40].forEach((len, i) => front.push(L(k.lineOnTop([numbers.x + 4, numbers.y + 4.5 + i * 5], [numbers.x + 4 + len, numbers.y + 4.5 + i * 5], FZ + 1, P), { tone: "mid", free: true })));
@@ -113,8 +113,8 @@ export function cardScene({ W = 900, H = 640 } = {}) {
     for (let a = -0.9; a <= 0.9; a += 0.15) pts.push([mark[0] + Math.cos(a) * (4 + i * 3.4), mark[1] + Math.sin(a) * (4 + i * 3.4)]);
     arcs.push(k.onTop(pts, FZ + 1, P));
   }
-  front.push(L(arcs.join(""), { tone: "mid", free: true }));
-  front.push(D([at([mark[0], mark[1], FZ + 1])], { size: 1, tone: "mid" }));
+  front.push(L(arcs.join(""), { tone: "lit", free: true }));
+  front.push(D([at([mark[0], mark[1], FZ + 1])], { size: 1, tone: "lit" }));
 
   const focusWorld = [MOD[0], MOD[1], MZ + 1.6 + LIFT.module];
   const [fx, fy] = at(focusWorld);

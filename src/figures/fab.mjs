@@ -480,6 +480,11 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
 .fab-tile.verify-end.on-die .frame{fill:var(--sch-line);stroke:var(--sch-line)}
 .fab-tile.verify-end.on-die .cells rect,.fab-tile.verify-end.on-die .g{fill:var(--l-silver)}
 .fab .ok-dots circle{fill:var(--accent)}
+.fab-lens{position:absolute;left:16px;bottom:14px;width:clamp(78px,13.5%,156px);aspect-ratio:1;border-radius:50%;overflow:hidden;background:var(--bg);border:1px solid var(--rule-strong);box-shadow:0 0 0 4px color-mix(in srgb,var(--bg) 70%,transparent),0 6px 18px var(--stage-edge);pointer-events:none}
+.fab-lens svg{display:block;width:100%;height:100%}
+.fab-lens .lens-s{opacity:0;transition:opacity .45s var(--ease)}
+.fab-lens .lens-s.on{opacity:1}
+@media (prefers-reduced-motion:reduce){.fab-lens .lens-s{transition:none}}
 .fab-corners{position:absolute;inset:14px 16px;pointer-events:none;font:11px/1 var(--mono);letter-spacing:.06em;color:var(--muted)}
 .fab-corners>span{position:absolute;white-space:nowrap}
 .fab-corners [data-fab-fig]{display:none}
@@ -513,6 +518,7 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
       <div class="keylight" aria-hidden="true"></div>
       ${svg}
       <div class="vignette" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>
+      ${lensSvg()}
       <div class="fab-corners" aria-hidden="true"><span style="top:0;left:0;color:var(--text)" data-fab-fig>Fig 4 · step 1 of ${STATIONS.length}</span><span style="top:0;right:0;text-transform:uppercase;letter-spacing:.12em" data-fab-title>${esc(STATIONS[0].name)}</span>${copy.readout ? `<span style="bottom:0;right:0">${esc(copy.readout)}</span>` : ""}</div>
     </div>
     <div class="fab-cap"><b data-fab-n>01</b><strong data-fab-name>${esc(STATIONS[0].name)}</strong><p data-fab-fact>${esc(STATIONS[0].fact)}</p></div>
@@ -527,6 +533,52 @@ export function fabScene({ W = 1200, H = 560, copy, site }) {
   <script type="application/json" id="fab-data">${JSON.stringify({ W, H, anchors, xs: XS, over, close, lead, steps: STEPS, stations: STATIONS, closing: copy.closing, closingLabel: copy.closing_label, closingTitle: copy.closing_title }).replace(/</g, "\\u003c")}</script>
 </section>`;
   return { css, html, js: FAB_JS };
+}
+
+// The lens: what the carrier holds right now, seen from above and enlarged,
+// one drawing per load. The loads on the line are small; this is where the
+// change at each station can be read.
+function lensSvg() {
+  const R = mulberry(19);
+  const f = (v) => Math.round(v * 10) / 10;
+  const rock = (cx, cy, r, mat) => {
+    const n = 6 + Math.floor(R() * 3), pts = [];
+    for (let j = 0; j < n; j++) { const a = (j / n) * Math.PI * 2 + R() * 0.5, rr = r * (0.7 + R() * 0.4); pts.push(`${f(cx + Math.cos(a) * rr)} ${f(cy + Math.sin(a) * rr * 0.86)}`); }
+    return `<path d="M${pts.join("L")}Z" fill="var(--m-${mat}-top)" stroke="var(--m-${mat}-edge)" stroke-width=".9" stroke-linejoin="round"/><path d="M${pts[1]}L${f(cx)} ${f(cy)}L${pts[4]}" fill="none" stroke="var(--m-${mat}-edge)" stroke-opacity=".35" stroke-width=".6"/>`;
+  };
+  // a wafer from above: a disc with its orientation flat
+  const disc = (r = 36, fill = "var(--m-mirror-top)") => `<path d="M${f(50 - r * 0.42)} ${f(50 + r * 0.907)}A${r} ${r} 0 1 1 ${f(50 + r * 0.42)} ${f(50 + r * 0.907)}Z" fill="${fill}" stroke="var(--m-mirror-edge)" stroke-width=".9"/>`;
+  const sheen = `<path d="M30 34L58 22M27 44L44 37" fill="none" stroke="var(--bg)" stroke-width="2.2" stroke-linecap="round" stroke-opacity=".8"/>`;
+  const dies = (draw, pitch = 9, size = 8, most = 10.5) => {
+    let out = "";
+    for (let i = -3; i <= 3; i++) for (let j = -3; j <= 3; j++) if (i * i + j * j <= most) out += draw(50 + i * pitch - size / 2, 50 + j * pitch - size / 2 - 1.5, size);
+    return out;
+  };
+  const outline = (x, y, z) => `<rect x="${f(x)}" y="${f(y)}" width="${z}" height="${z}" fill="none" stroke="var(--lay-poly)" stroke-width=".55"/>`;
+  const built = (x, y, z) => `<rect x="${f(x)}" y="${f(y)}" width="${z}" height="${z}" fill="var(--lay-cell)" stroke="var(--lay-poly)" stroke-width=".55"/><rect x="${f(x + 1.2)}" y="${f(y + 1.2)}" width="${f(z * 0.34)}" height="${f(z - 2.4)}" fill="var(--lay-diff)"/><rect x="${f(x + z * 0.52)}" y="${f(y + 1.2)}" width="${f(z * 0.34)}" height="${f(z * 0.36)}" fill="var(--lay-metal)" fill-opacity=".45"/>`;
+  const tested = (x, y, z) => built(x, y, z) + `<circle cx="${f(x + z - 1.9)}" cy="${f(y + z - 1.9)}" r="1.15" fill="var(--accent)"/>`;
+  const pkg = (x, y) => {
+    let legs = "";
+    for (let i = 0; i < 5; i++) legs += `M${x + 4 + i * 4.5} ${y - 3}v3M${x + 4 + i * 4.5} ${y + 26}v3M${x - 3} ${y + 4 + i * 4.5}h3M${x + 26} ${y + 4 + i * 4.5}h3`;
+    return `<path d="${legs}" fill="none" stroke="var(--l-gold)" stroke-width="1.5"/><rect x="${x}" y="${y}" width="26" height="26" rx="1.5" fill="var(--m-epoxy-top)" stroke="var(--m-epoxy-edge)" stroke-width=".8"/><circle cx="${x + 4.5}" cy="${y + 4.5}" r="1.3" fill="var(--l-silver)"/>`;
+  };
+  const big = (g) => `<g transform="translate(50 51) scale(1.32) translate(-50 -51)">${g}</g>`;
+  const S = [
+    big(rock(34, 40, 13, "quartz") + rock(62, 36, 11, "quartz") + rock(48, 62, 14, "quartz") + rock(70, 60, 8, "quartz") + rock(28, 64, 7, "quartz")),
+    big(rock(38, 42, 14, "silicon") + rock(64, 46, 12, "silicon") + rock(48, 66, 11, "silicon")),
+    [30, 50, 70].map((x) => `<rect x="${x - 6}" y="18" width="12" height="64" rx="6" fill="var(--m-silicon-top)" stroke="var(--m-silicon-edge)" stroke-width=".9"/><path d="M${x - 2.5} 24v50" stroke="var(--bg)" stroke-width="1.6" stroke-linecap="round" stroke-opacity=".7"/>`).join(""),
+    `<path d="M14 50C18 38 26 34 34 34H70C80 34 84 42 88 50C84 58 80 66 70 66H34C26 66 18 62 14 50Z" fill="var(--m-silicon-top)" stroke="var(--m-silicon-edge)" stroke-width=".9"/><path d="M30 41H72" stroke="var(--bg)" stroke-width="2.2" stroke-linecap="round" stroke-opacity=".75"/><path d="M34 34V66M70 34V66" stroke="var(--m-silicon-edge)" stroke-opacity=".3" stroke-width=".7"/>`,
+    [0, 1, 2, 3].map((i) => `<g transform="translate(${-9 + i * 6} ${9 - i * 6})">${disc(28)}</g>`).join("") + `<g transform="translate(9 -9)">${sheen}</g>`,
+    disc() + sheen,
+    disc() + dies(outline),
+    disc() + dies(built),
+    disc() + dies(tested),
+    `<circle cx="50" cy="50" r="40" fill="none" stroke="var(--anatomy-lo)" stroke-width="1"/><circle cx="50" cy="50" r="37" fill="none" stroke="var(--anatomy-faint)" stroke-width=".8"/>` + dies(built, 10.6, 7.6),
+    pkg(20, 20) + pkg(54, 20) + pkg(20, 54) + pkg(54, 54),
+    `<rect x="14" y="24" width="72" height="52" rx="3" fill="var(--m-pcb-top)" stroke="var(--anatomy-mid)" stroke-width=".9"/><path d="M20 34H40M20 42H40M20 50H36M20 58H40M20 66H34M58 60V70M66 60V70" fill="none" stroke="var(--l-copper)" stroke-width="1.2" stroke-linecap="round"/><rect x="44" y="34" width="22" height="22" rx="1.2" fill="var(--m-epoxy-top)" stroke="var(--anatomy-lit)" stroke-width=".9"/><rect x="70" y="30" width="11" height="10" rx="1" fill="var(--m-epoxy-top)"/><rect x="70" y="46" width="10" height="13" rx="1" fill="var(--m-epoxy-top)"/><rect x="42" y="62" width="9" height="9" rx="1" fill="var(--m-epoxy-top)"/>`,
+    `<rect x="30" y="12" width="40" height="76" rx="6" fill="var(--anatomy-top)" stroke="var(--anatomy-hi)" stroke-width="1"/><rect x="32.6" y="14.6" width="34.8" height="70.8" rx="4" fill="var(--m-screen-top)"/><circle cx="50" cy="19" r="1.3" fill="var(--anatomy-mid)"/><rect x="41" y="40" width="18" height="18" rx="1.2" fill="none" stroke="var(--accent)" stroke-width="1.1"/><rect x="44.5" y="43.5" width="11" height="11" fill="var(--accent)" fill-opacity=".55"/>`,
+  ];
+  return `<div class="fab-lens" aria-hidden="true"><svg viewBox="0 0 100 100">${S.map((g, i) => `<g class="lens-s${i === 0 ? " on" : ""}" data-lens="${i}">${g}</g>`).join("")}</svg></div>`;
 }
 
 function mulberry(a) {
@@ -551,6 +603,7 @@ const FAB_JS = `
   const peds = [...svg.querySelectorAll(".ped")];
   const fxs = [...svg.querySelectorAll("[data-fx]")];
   const web = svg.querySelector(".web"), blade = svg.querySelector(".blade");
+  const lens = [...root.querySelectorAll(".lens-s")];
   const verify = svg.querySelector(".verify"), verifyEnd = svg.querySelectorAll(".verify-end");
   const steps = [...root.querySelectorAll("[data-step]")];
   const nEl = root.querySelector("[data-fab-n]"), nameEl = root.querySelector("[data-fab-name]"), factEl = root.querySelector("[data-fab-fact]");
@@ -623,6 +676,7 @@ const FAB_JS = `
     }
     carrier.setAttribute("transform", "translate(" + f3(u[0] * x) + " " + f3(u[1] * x) + ")");
     loads.forEach((el, j) => (el.style.opacity = j === loadIndex ? 1 : 0));
+    lens.forEach((el, j) => el.classList.toggle("on", j === loadIndex));
     peds.forEach((el, j) => el.classList.toggle("on", j < reached || t >= END));
     fxs.forEach((el) => el.classList.toggle("on", Number(el.dataset.fx) === active));
     web.classList.toggle("on", active === 4);

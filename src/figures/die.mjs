@@ -6,7 +6,7 @@
 // Cell proportions follow the open SkyWater SKY130 high-density library
 // (rows 2.72 µm, sites 0.46 µm; inv_1 is 3 sites, nand2_1 is 4). Floorplans
 // are illustrative, not any product's die.
-import { k, scene, r2 } from "../lib.mjs";
+import { k, scene, r2, esc } from "../lib.mjs";
 
 const rand = (seed) => () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
@@ -218,6 +218,19 @@ function floorplan(spec) {
   }
   // A slow sheen across the whole die.
   svg.push(`<rect class="sheen" width="1000" height="1000" fill="url(#${id}-sheen)"/>`);
+  // Name the parts: one label per kind of block, on the largest block with room for it.
+  const names = spec.labels ?? {};
+  const FS = 34, CH = FS * 0.62, labs = [];
+  const seen = new Set();
+  for (const b of [...spec.blocks].sort((p, q) => q.w * q.h - p.w * p.h)) {
+    const text = names[b.kind];
+    if (!text || seen.has(text)) continue;
+    const tw = text.length * CH + 26;
+    if (b.w < tw + 16 || b.h < FS + 44) continue;
+    seen.add(text);
+    labs.push(`<rect x="${b.x + 10}" y="${b.y + 10}" width="${r2(tw)}" height="${FS + 20}" rx="3"/><text x="${b.x + 23}" y="${b.y + 10 + FS + 1}">${esc(text)}</text>`);
+  }
+  if (labs.length) svg.push(`<g class="fp-labs">${labs.join("")}</g>`);
   // Focus marker (where the next stage lands).
   const [fx, fy] = spec.focus;
   svg.push(`<rect class="focus-mark" x="${fx - 14}" y="${fy - 9}" width="28" height="18" fill="none" stroke="var(--lay-poly)" stroke-width="1.2"/>`);
