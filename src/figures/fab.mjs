@@ -486,12 +486,11 @@ export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "" }) {
 .fab-lens .lens-s.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.fab-lens .lens-s{transition:none}}
 .fab-check{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px 40px;align-items:center;margin:44px 0 0;padding-top:36px;border-top:1px solid var(--rule)}
-.check-stage{position:relative;aspect-ratio:1000/1111;width:100%;overflow:hidden;background:var(--lay-bg);border:1px solid var(--rule-strong);--cut:50%}
+.check-stage{position:relative;aspect-ratio:1000/1111;width:100%;overflow:hidden;background:var(--lay-bg);outline:1px solid var(--rule-strong);outline-offset:-1px;touch-action:pan-y;user-select:none;cursor:ew-resize;--cut:50%}
 .check-stage img,.check-stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .check-plan{clip-path:inset(0 0 0 var(--cut))}
-.check-plan .plate{fill:var(--lay-bg)}
 .check-plan .ring{fill:none;stroke:var(--lay-metal);stroke-opacity:.5;stroke-width:3}
-.check-plan .part{fill:var(--lay-cell);stroke:var(--lay-poly);stroke-width:3}
+.check-plan .part{fill:var(--lay-cell);fill-opacity:.2;stroke:var(--lay-poly);stroke-width:3}
 .check-plan .part-tag rect{fill:var(--lay-poly)}
 .check-plan .part-tag text{fill:var(--on-accent);font:600 40px var(--body)}
 .check-line{position:absolute;top:0;bottom:0;left:var(--cut);width:2px;margin-left:-1px;background:var(--accent);pointer-events:none}
@@ -510,18 +509,12 @@ export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "" }) {
 .fab-cap b{font:500 13px/1 var(--mono);color:var(--warm);letter-spacing:.06em}
 .fab-cap strong{font-family:var(--display);font-weight:500;font-size:22px;color:var(--white)}
 .fab-cap p{grid-column:2;margin:0;color:var(--text-strong);font-size:clamp(15px,1.2vw,17px)}
-.ledger{display:grid;grid-template-columns:repeat(var(--steps),minmax(0,1fr));gap:0;border-top:1px solid var(--rule);margin-top:6px}
-.ledger button.pre{color:var(--muted);background:var(--bg-raised)}
-.ledger button.pre small{display:block;font:10px/1.3 var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-top:4px;color:var(--muted)}
-.ledger button{position:relative;background:none;border:0;border-right:1px solid var(--rule);text-align:left;padding:10px 8px 12px;min-height:56px;cursor:pointer;color:var(--muted);font-size:12px;line-height:1.25}
-.ledger button:last-child{border-right:0}
-.ledger button b{display:block;font:500 11px/1 var(--mono);color:var(--muted);margin-bottom:6px}
-.ledger button::after{content:"";position:absolute;left:0;top:-1px;height:2px;width:calc(var(--p,0)*100%);background:var(--warm)}
-.ledger button[aria-current]{color:var(--white)}
-.ledger button[aria-current] b{color:var(--warm)}
-.ledger button:hover{color:var(--white)}
-.fab-controls{display:flex;justify-content:flex-end;gap:6px;margin-top:14px}
-@media (max-width:860px){.fab{padding-block:56px}.fab-head{grid-template-columns:1fr;align-items:start;margin-bottom:26px}.ledger{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(78px,1fr);overflow-x:auto;scrollbar-width:thin}}
+.fab-controls{display:flex;align-items:center;gap:8px;margin-top:12px}
+.fab-controls .scrub{flex:1;min-width:0;margin:0 12px 0 0}
+.fab-controls .btn{border-color:transparent;padding-inline:10px;white-space:nowrap}
+.fab-controls .btn:hover{color:var(--accent)}
+@media (max-width:860px){.fab{padding-block:56px}.fab-head{grid-template-columns:1fr;align-items:start;margin-bottom:26px}}
+@media (max-width:440px){.fab-controls{flex-wrap:wrap;justify-content:flex-end}.fab-controls .scrub{flex-basis:100%;margin:0}}
 @media (max-width:640px){.fab-stage{aspect-ratio:4/3}.fab-corners>span:not(:first-child){display:none}}
 `;
 
@@ -540,11 +533,9 @@ export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "" }) {
       <div class="fab-corners" aria-hidden="true"><span style="top:0;left:0;color:var(--text)" data-fab-fig>Fig 4 · step 1 of ${STATIONS.length}</span><span style="top:0;right:0;text-transform:uppercase;letter-spacing:.12em" data-fab-title>${esc(STATIONS[0].name)}</span>${copy.readout ? `<span style="bottom:0;right:0">${esc(copy.readout)}</span>` : ""}</div>
     </div>
     <div class="fab-cap"><b data-fab-n>01</b><strong data-fab-name>${esc(STATIONS[0].name)}</strong><p data-fab-fact>${esc(STATIONS[0].fact)}</p></div>
-    <div class="ledger" role="group" aria-label="Jump to a step" style="--steps:${STATIONS.length}">
-      ${STATIONS.map((st, i) => `<button type="button" data-step="${i}"${i === 0 ? ' class="pre"' : ""}><b>${String(i + 1).padStart(2, "0")}</b>${esc(st.name)}${i === 0 && copy.lead_note ? `<small>${esc(copy.lead_note)}</small>` : ""}</button>`).join("")}
-    </div>
     ${checkFigure(copy, checkImage)}
     <div class="fab-controls">
+      ${copy.scrub_label ? `<input class="scrub" data-fab-scrub type="range" min="0" max="1000" value="0" aria-label="${esc(copy.scrub_label)}">` : ""}
       <button type="button" class="btn" data-fab-pause aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3v10M11 3v10"/></svg><span>Pause</span></button>
       <button type="button" class="btn" data-fab-replay><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8a4.8 4.8 0 1 0 1.4-3.4M3 2.6v2.6h2.6"/></svg><span>Replay</span></button>
     </div>
@@ -612,12 +603,12 @@ function checkFigure(copy, image) {
   return `<figure class="fab-check" data-check>
       <div>
         <div class="check-stage">
-          <img src="${image}" alt="" decoding="async">
-          <svg class="check-plan" viewBox="0 0 1000 1111" aria-hidden="true"><rect class="plate" width="1000" height="1111"/><rect class="ring" x="24" y="24" width="952" height="1063"/>${parts}</svg>
+          <img src="${image}" width="1000" height="1111" alt="" draggable="false" decoding="async">
+          <svg class="check-plan" viewBox="0 0 1000 1111" aria-hidden="true"><rect class="ring" x="24" y="24" width="952" height="1063"/>${parts}</svg>
           <div class="check-line" aria-hidden="true"></div>
           <div class="check-tags" aria-hidden="true"><span>${esc(copy.check_photo_label ?? "")}</span><span>${esc(copy.check_plan_label ?? "")}</span></div>
         </div>
-        <input class="check-range" type="range" min="0" max="100" value="50" aria-label="${esc(copy.check_slider ?? copy.check_title ?? "")}">
+        <input class="check-range" data-overlay-label="${esc(copy.check_overlay_label ?? copy.check_plan_label ?? "")}" type="range" min="0" max="100" value="50" aria-label="${esc(copy.check_slider ?? copy.check_title ?? "")}">
       </div>
       <figcaption>${copy.check_title ? `<h3>${esc(copy.check_title)}</h3>` : ""}${copy.check_text ? `<p>${esc(copy.check_text)}</p>` : ""}<p class="sr-only">${esc(copy.check_parts.map((p) => p.label).join(", "))}.</p>${copy.check_credit ? `<p class="check-credit">${esc(copy.check_credit)}</p>` : ""}</figcaption>
     </figure>`;
@@ -647,15 +638,15 @@ const FAB_JS = `
   const web = svg.querySelector(".web"), blade = svg.querySelector(".blade");
   const lens = [...root.querySelectorAll(".lens-s")];
   const verify = svg.querySelector(".verify"), verifyEnd = svg.querySelectorAll(".verify-end");
-  const steps = [...root.querySelectorAll("[data-step]")];
+  const scrub = root.querySelector("[data-fab-scrub]");
   const nEl = root.querySelector("[data-fab-n]"), nameEl = root.querySelector("[data-fab-name]"), factEl = root.querySelector("[data-fab-fact]");
   const figEl = root.querySelector("[data-fab-fig]"), titleEl = root.querySelector("[data-fab-title]");
   const pauseBtn = root.querySelector("[data-fab-pause]"), replay = root.querySelector("[data-fab-replay]");
   const fabStage = root.querySelector(".fab-stage");
   const still = matchMedia("(prefers-reduced-motion: reduce)");
-  const ST = D.steps, N = ST.length, DWELL = 3.4, LEAD = 6.6, MOVE = 1.2, OVER = 3.2, LOOP = 2.4;
-  // Each step stays up long enough to read its fact, about 200 words a minute after the camera settles.
-  const DUR = ST.map((s, i) => Math.max(s.m1 > s.m0 ? LEAD : DWELL, 0.6 + 0.3 * D.stations[i].fact.trim().split(" ").length));
+  const ST = D.steps, N = ST.length, DWELL = 2.8, LEAD = 4.2, MOVE = 0.75, OVER = 2, LOOP = 1.4;
+  // Each step stays up long enough to read its fact, about 240 words a minute after the camera settles.
+  const DUR = ST.map((s, i) => Math.max(s.m1 > s.m0 ? LEAD : DWELL, 0.6 + 0.25 * D.stations[i].fact.trim().split(" ").length));
   const T0 = DUR.map((_, i) => DUR.slice(0, i).reduce((a, b) => a + b, 0));
   const END = T0[N - 1] + DUR[N - 1];
   const TOTAL = END + OVER + LOOP;
@@ -666,7 +657,7 @@ const FAB_JS = `
   const lerpLog = (a, b, t) => Math.exp(lerp(Math.log(a), Math.log(b), t));
   const f3 = (v) => Math.round(v * 1000) / 1000;
   const fine = (v) => Math.round(v * 1e6) / 1e6; // zoom keeps more digits: a rounded zoom jolts the whole view
-  let t = 0, playing = false, visible = false, frame = 0, last = 0, started = false, shown = -1;
+  let t = 0, playing = false, visible = false, frame = 0, last = null, started = false, shown = -1;
 
   function text(i) {
     if (shown === i) return;
@@ -678,8 +669,7 @@ const FAB_JS = `
       const st = D.stations[i];
       nEl.textContent = String(i + 1).padStart(2, "0"); nameEl.textContent = st.name; factEl.textContent = st.fact;
       figEl.textContent = "Fig 4 · step " + (i + 1) + " of " + N; titleEl.textContent = st.name;
-      const ledger = steps[i].parentElement;
-      if (ledger.scrollWidth > ledger.clientWidth + 2) ledger.scrollTo({ left: steps[i].offsetLeft - ledger.clientWidth / 2 + steps[i].clientWidth / 2, behavior: still.matches ? "auto" : "smooth" });
+
     }
   }
   const stepAt = (tt) => { let i = 0; while (i < N - 1 && tt >= T0[i + 1]) i++; return i; };
@@ -736,24 +726,48 @@ const FAB_JS = `
     verify.style.strokeDasharray = lp > 0 ? (f3(lp) + " 1") : "0 1";
     verifyEnd.forEach((el) => (el.style.opacity = lp >= Number(el.dataset.at) ? 1 : 0));
     text(t > END + OVER * 0.5 ? N : i);
-    steps.forEach((b, j) => { b.style.setProperty("--p", f3(clamp((t - T0[j]) / DUR[j]))); b.toggleAttribute("aria-current", j === i && t < END); });
+    if (scrub) {
+      scrub.value = String(Math.round(t / TOTAL * 1000));
+      scrub.setAttribute("aria-valuetext", nameEl.textContent);
+    }
   }
   function tick(now) {
-    const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 0;
+    frame = 0;
+    if (!playing || !visible || document.hidden) { last = null; return; }
+    // Keep real-time playback through low frame rates; limit only long foreground stalls.
+    const dt = last === null ? 0 : Math.min((now - last) / 1000, 0.25);
     last = now;
-    if (playing) { t = Math.min(TOTAL, t + dt); render(); if (t >= TOTAL) setPlaying(false); }
-    frame = playing && visible ? requestAnimationFrame(tick) : 0;
+    t = Math.min(TOTAL, t + dt);
+    render();
+    if (t >= TOTAL) setPlaying(false);
+    else frame = requestAnimationFrame(tick);
   }
-  const run = () => { if (!frame && playing && visible) { last = 0; frame = requestAnimationFrame(tick); } };
+  const run = () => {
+    const active = playing && visible && !document.hidden;
+    fabStage.classList.toggle("paused", !active);
+    if (!active) {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0; last = null;
+    } else if (!frame) {
+      last = null; frame = requestAnimationFrame(tick);
+    }
+  };
   function setPlaying(on) {
     playing = on;
-    fabStage.classList.toggle("paused", !on);
     pauseBtn.setAttribute("aria-pressed", String(!on));
     pauseBtn.querySelector("span").textContent = on ? "Pause" : "Play";
+    pauseBtn.querySelector("path").setAttribute("d", on ? "M5 3v10M11 3v10" : "M5 3l8 5-8 5Z");
     replay.classList.toggle("prime", !on && t >= TOTAL);
     run();
   }
-  steps.forEach((b, j) => b.addEventListener("click", () => { t = T0[j] + (j ? MOVE * 0.98 : 0); started = true; render(); setPlaying(!still.matches); }));
+  if (scrub) {
+    scrub.addEventListener("pointerdown", () => { started = true; setPlaying(false); });
+    scrub.addEventListener("input", () => {
+      started = true; setPlaying(false);
+      t = clamp(Number(scrub.value) / 1000) * TOTAL;
+      render();
+    });
+  }
   replay.addEventListener("click", () => { t = 0; started = true; render(); setPlaying(true); });
   pauseBtn.addEventListener("click", () => { if (t >= TOTAL) { replay.click(); return; } started = true; setPlaying(!playing); });
   new IntersectionObserver((es) => {
@@ -761,13 +775,28 @@ const FAB_JS = `
     if (visible && !started && !still.matches) { started = true; setPlaying(true); }
     run();
   }, { threshold: 0.35 }).observe(fabStage);
-  document.addEventListener("visibilitychange", () => { visible = !document.hidden && visible; run(); });
+  document.addEventListener("visibilitychange", run);
   // The photograph-and-plan comparison under the line.
   const check = root.querySelector("[data-check]");
   if (check) {
     const stage = check.querySelector(".check-stage"), range = check.querySelector(".check-range");
-    const set = () => { stage.style.setProperty("--cut", range.value + "%"); range.setAttribute("aria-valuetext", range.value + "% photograph"); };
-    range.addEventListener("input", set); set();
+    const set = () => { stage.style.setProperty("--cut", range.value + "%"); range.setAttribute("aria-valuetext", (100 - Number(range.value)) + "% " + range.dataset.overlayLabel); };
+    range.addEventListener("input", set);
+    const drag = (event) => {
+      const box = stage.getBoundingClientRect();
+      range.value = String(Math.round(clamp((event.clientX - box.left) / box.width) * 100));
+      set();
+    };
+    stage.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary || event.button !== 0) return;
+      range.focus({ preventScroll: true });
+      stage.setPointerCapture(event.pointerId);
+      drag(event);
+    });
+    stage.addEventListener("pointermove", (event) => {
+      if (stage.hasPointerCapture(event.pointerId)) drag(event);
+    });
+    set();
   }
   window.__fab = { seek: (s) => { t = s; render(); }, pause: () => setPlaying(false), T0, END, TOTAL };
   if (still.matches) t = TOTAL;

@@ -13,6 +13,17 @@ python3 -m http.server 8814 --directory out
 
 Open `http://localhost:8814/site-preview.html`. Without the separately held production assets, this local preview uses system fonts and omits the two exhibit images. The `/ite3/` companion and its carousel also require a companion build.
 
+## Playback checks
+
+The opening gives each everyday object 15 seconds, followed by the open chip
+and ending (65.4 seconds total). Fabrication runs for 30 seconds with the
+current short captions; longer future captions extend their step automatically.
+
+After building, run `node --test tests/*.test.mjs`. These checks cover
+elapsed-time playback, pause/resume, offscreen and hidden-tab behaviour, and
+reduced motion. Visually check both animation timelines, transitions and controls at desktop
+and phone widths. The optional photograph comparison is disabled on the homepage.
+
 ## Production builds
 
 The Vercel project builds this repository. Production builds retrieve a pinned revision of the private production asset bundle, including the existing scoped `/ite3/` companion and its notices. They fail if the bundle, the font, a referenced image, the companion or the observability configuration is missing. The private bundle is not licensed under this repository's Apache licence.
