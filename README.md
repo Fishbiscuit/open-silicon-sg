@@ -15,10 +15,14 @@ Open `http://localhost:8814/site-preview.html`. Without the separately held prod
 
 ## Playback checks
 
-After building, run `node --test tests/fab-playback.test.mjs`. These checks cover
+The opening gives each everyday object 15 seconds, followed by the open chip
+and ending (65.4 seconds total). Fabrication runs for 30 seconds with the
+current short captions; longer future captions extend their step automatically.
+
+After building, run `node --test tests/*.test.mjs`. These checks cover
 elapsed-time playback, pause/resume, offscreen and hidden-tab behaviour, and
-reduced motion. Visually check the photograph overlay and its native range and
-drag controls at desktop and phone widths.
+reduced motion. Visually check both animation timelines, transitions and controls at desktop
+and phone widths. The optional photograph comparison is disabled on the homepage.
 
 ## Production builds
 

@@ -19,6 +19,7 @@ function player({reduced = false} = {}) {
       getBoundingClientRect:()=>({width:1000,height:500}),
       querySelector:s=>node(key+' '+s), querySelectorAll:s=>list(s),
       addEventListener:(type,fn)=>events[key+':'+type]=fn,
+      click:()=>events[key+':click']?.(),
       parentElement:{scrollWidth:100,clientWidth:100},
     });
     return nodes.get(key);
@@ -39,6 +40,7 @@ function player({reduced = false} = {}) {
     hidden(value){document.hidden=value;events.visibilitychange();},
     pause(){context.window.__fab.pause();},
     toggle(){events['[data-fab] [data-fab-pause]:click']();},
+    seek(value){node('[data-fab] [data-fab-scrub]').value=String(value);events['[data-fab] [data-fab-scrub]:input']();},
   };
 }
 for (const fps of [60,30,10,4]) test(`foreground playback follows elapsed time at ${fps} fps`,()=>{
@@ -66,4 +68,10 @@ test('a long foreground stall does not skip a caption',()=>{
 });
 test('reduced motion starts complete and does not autoplay',()=>{
   const p=player({reduced:true});p.visible(true);assert.equal(p.pending,0);assert.equal(p.time,p.total);
+});
+
+test('timeline input pauses at the chosen position, including both ends',()=>{
+  const p=player();p.visible(true);p.frame(0);
+  for(const value of [0,500,1000]){p.seek(value);assert.equal(p.time,p.total*value/1000);assert.equal(p.pending,0);}
+  p.toggle();p.frame(100);assert.equal(p.time,0);p.frame(200);assert.equal(p.time,.1);
 });

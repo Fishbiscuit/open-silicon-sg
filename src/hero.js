@@ -20,10 +20,11 @@
   const hint = root.querySelector("[data-flip-hint]");
   const still = matchMedia("(prefers-reduced-motion: reduce)");
 
-  // Give each object and its captions more time without changing the end card.
+  // Source choreography is mapped to a 15-second slot for each everyday object.
   const OBJECT_SPEED = 0.8;
   const SEG = Object.fromEntries(Object.entries({ in: [0, 0.9], explode: [1.7, 3.5], zoom: [4.3, 6.4], join: [5.7, 6.1], x1: [6.0, 6.7], die: [6.0, 7.8], morph: [7.7, 9.0], plan: [8.9, 10.9], x2: [10.4, 11.0], cell: [10.6, 12.4], sch: [12.2, 13.8], out: [14.8, 15.4] }).map(([name, times]) => [name, times.map(t => t / OBJECT_SPEED)]));
-  const BEAT = 15.4 / OBJECT_SPEED;
+  const SOURCE_BEAT = 15.4 / OBJECT_SPEED;
+  const BEAT = 15;
   // The end card starts once the last object's schematic has been drawn.
   const E = { cellOut: [0, 1.5], latIn: [0.5, 1.5], latZoom: [0.8, 4.2], pick: [3.6, 4.4], morph: [4.3, 5.7], cells: [5.4, 6.8], label: [6.5, 7.1], slide: [7.0, 8.4], trace: [7.3, 9.1], name: [8.1, 9.3] };
   const END_LEN = 10.4;
@@ -44,9 +45,15 @@
   const ACT_AT = 5.2;
   const ACTS = { card: { len: 1.5, lit: 1.15 }, cooker: { len: 2.1, lit: 0.8 } };
   const ACT = DATA.beats.map((b) => ACTS[b.id]?.len ?? 0);
-  const AT = HOLD.reduce((at, h, i) => [...at, at[i] + BEAT + ACT[i] + h], [0]); // when each object starts
   const LAST = DATA.beats.length - 1;
-  const OPEN_AT = AT[LAST] + ACT[LAST] + (HOLD[LAST] ? SEG.out[0] + HOLD[LAST] : SEG.sch[1] + 0.6);
+  const SOURCE_END = HOLD.map((h, i) => ACT[i] + (i === LAST ? (h ? SEG.out[0] + h : SEG.sch[1] + 0.6) : SOURCE_BEAT + h));
+  const AT = DATA.beats.map((_, i) => i * BEAT);
+  const OPEN_AT = DATA.beats.length * BEAT;
+  // Start the first object assembled; keep its full fifteen seconds of screen time.
+  const objectTime = (i, seconds) => {
+    const start = i === 0 ? 1.3 : 0;
+    return start + Math.min(1, Math.max(0, seconds / BEAT)) * (SOURCE_END[i] - start);
+  };
   const warp = (i, t) => (t < ACT_AT ? t : Math.max(ACT_AT, t - ACT[i]));
   const END_AT = OPEN_AT + OPEN_LEN;
   const TOTAL = END_AT + END_LEN;
@@ -233,7 +240,7 @@
     // Cell stage.
     const xc = seg(t, SEG.x2);
     const c = ease(seg(t, SEG.cell));
-    const settle = 1 + 0.045 * ease(seg(t, [SEG.cell[1], BEAT + b.hold])); // keep drifting in while the schematic draws
+    const settle = 1 + 0.045 * ease(seg(t, [SEG.cell[1], SOURCE_BEAT + b.hold])); // keep drifting in while the schematic draws
     const closer = b.run ? ease(seg(t - SEG.sch[1], CLOSER)) : 0;
     const sCell = b.cellFit * Math.exp(Math.log(b.cellZoom) * c) * settle * (1 + 0.3 * closer);
     const p0 = [(C[0] - b.cellOrigin[0]) / b.cellFit, (C[1] - b.cellOrigin[1]) / b.cellFit];
@@ -249,7 +256,7 @@
     if (hint) hint.classList.toggle("on", !!b.run && t > SEG.sch[1] + 0.4 && stageNow(b, t) === 2);
     const outAt = SEG.out.map((v) => v + b.hold);
     const out = b.n === beats.length ? 0 : seg(t, outAt); // the last object hands over to the end card instead
-    if (b.n === beats.length && raw + AT[LAST] >= OPEN_AT) return; // drawOpen owns the cell layer from here
+    if (b.n === beats.length && raw >= SOURCE_END[LAST]) return; // drawOpen owns the cell layer from here
     show(b.cells, xc * (1 - out));
     if (!still.matches) blur(b.cells, 9 * (1 - ease(xc)) + 6 * ease(out));
 
@@ -321,7 +328,7 @@
 
   // Open on the assembled card rather than a fade from black, so the first
   // still frame (and any link preview) already shows the object.
-  let t = 1.3, playing = !still.matches, visible = true, last = 0, frame = 0, done = false;
+  let t = 0, playing = !still.matches, visible = true, last = null, frame = 0, done = false;
   // The card waits until someone is looking: a first scroll, its caption in view, or six seconds.
   let waiting = !still.matches;
   const begin = () => { waiting = false; };
@@ -399,7 +406,7 @@
     const cssScale = cssScaleNow();
     let i = LAST;
     while (i > 0 && t < AT[i]) i--;
-    const local = t - AT[i];
+    const local = objectTime(i, t - AT[i]);
     beats.forEach((b, j) => {
       if (j === i) drawBeat(b, local, cssScale);
       else { show(b.obj, 0); show(b.die, 0); show(b.cells, 0); }
@@ -425,7 +432,9 @@
   }
 
   function tick(now) {
-    const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 0;
+    frame = 0;
+    if (!playing || !visible || document.hidden || done) { last = null; return; }
+    const dt = last === null ? 0 : Math.min((now - last) / 1000, 0.25);
     last = now;
     if (playing && !done && !waiting) {
       t += dt;
@@ -434,7 +443,16 @@
     }
     frame = playing && visible && !done ? requestAnimationFrame(tick) : 0;
   }
-  const run = () => { if (!frame && playing && visible && !done) { last = 0; frame = requestAnimationFrame(tick); } };
+  const run = () => {
+    const active = playing && visible && !document.hidden && !done;
+    stage.classList.toggle("paused", !active);
+    if (!active) {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0; last = null;
+    } else if (!frame) {
+      last = null; frame = requestAnimationFrame(tick);
+    }
+  };
   const setPlaying = (on) => {
     playing = on;
     if (on) begin();
@@ -473,7 +491,7 @@
     const key = el.dataset.bit;
     const run = b.run;
     if (!run.manual) {
-      const s = warp(b.i, t - AT[b.i]) - SEG.sch[1];
+      const s = warp(b.i, objectTime(b.i, t - AT[b.i])) - SEG.sch[1];
       run.manual = Object.fromEntries(Object.entries(run.inputs).map(([k, changes]) => [k, Math.round(level(s, changes))]));
     }
     setPlaying(false);
@@ -491,7 +509,7 @@
     el.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(el); } });
   });
   new IntersectionObserver((es) => { visible = es[es.length - 1].isIntersecting; run(); }, { threshold: 0.15 }).observe(stage);
-  document.addEventListener("visibilitychange", () => { visible = !document.hidden; run(); });
+  document.addEventListener("visibilitychange", run);
 
   window.__hero = { seek: (s) => { finale(false); clearManual(); t = s; capIndex = null; render(); }, pause: () => setPlaying(false), finale: () => finale(true), BEAT, AT, SEG, END_AT, TOTAL };
   if (still.matches) finale(true);
