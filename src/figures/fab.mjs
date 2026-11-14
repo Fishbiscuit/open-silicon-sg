@@ -486,12 +486,11 @@ export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "" }) {
 .fab-lens .lens-s.on{opacity:1}
 @media (prefers-reduced-motion:reduce){.fab-lens .lens-s{transition:none}}
 .fab-check{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px 40px;align-items:center;margin:44px 0 0;padding-top:36px;border-top:1px solid var(--rule)}
-.check-stage{position:relative;aspect-ratio:1000/1111;width:100%;overflow:hidden;background:var(--lay-bg);border:1px solid var(--rule-strong);--cut:50%}
+.check-stage{position:relative;aspect-ratio:1000/1111;width:100%;overflow:hidden;background:var(--lay-bg);outline:1px solid var(--rule-strong);outline-offset:-1px;touch-action:pan-y;user-select:none;cursor:ew-resize;--cut:50%}
 .check-stage img,.check-stage svg{position:absolute;inset:0;width:100%;height:100%;display:block}
 .check-plan{clip-path:inset(0 0 0 var(--cut))}
-.check-plan .plate{fill:var(--lay-bg)}
 .check-plan .ring{fill:none;stroke:var(--lay-metal);stroke-opacity:.5;stroke-width:3}
-.check-plan .part{fill:var(--lay-cell);stroke:var(--lay-poly);stroke-width:3}
+.check-plan .part{fill:var(--lay-cell);fill-opacity:.2;stroke:var(--lay-poly);stroke-width:3}
 .check-plan .part-tag rect{fill:var(--lay-poly)}
 .check-plan .part-tag text{fill:var(--on-accent);font:600 40px var(--body)}
 .check-line{position:absolute;top:0;bottom:0;left:var(--cut);width:2px;margin-left:-1px;background:var(--accent);pointer-events:none}
@@ -612,12 +611,12 @@ function checkFigure(copy, image) {
   return `<figure class="fab-check" data-check>
       <div>
         <div class="check-stage">
-          <img src="${image}" alt="" decoding="async">
-          <svg class="check-plan" viewBox="0 0 1000 1111" aria-hidden="true"><rect class="plate" width="1000" height="1111"/><rect class="ring" x="24" y="24" width="952" height="1063"/>${parts}</svg>
+          <img src="${image}" width="1000" height="1111" alt="" draggable="false" decoding="async">
+          <svg class="check-plan" viewBox="0 0 1000 1111" aria-hidden="true"><rect class="ring" x="24" y="24" width="952" height="1063"/>${parts}</svg>
           <div class="check-line" aria-hidden="true"></div>
           <div class="check-tags" aria-hidden="true"><span>${esc(copy.check_photo_label ?? "")}</span><span>${esc(copy.check_plan_label ?? "")}</span></div>
         </div>
-        <input class="check-range" type="range" min="0" max="100" value="50" aria-label="${esc(copy.check_slider ?? copy.check_title ?? "")}">
+        <input class="check-range" data-overlay-label="${esc(copy.check_overlay_label ?? copy.check_plan_label ?? "")}" type="range" min="0" max="100" value="50" aria-label="${esc(copy.check_slider ?? copy.check_title ?? "")}">
       </div>
       <figcaption>${copy.check_title ? `<h3>${esc(copy.check_title)}</h3>` : ""}${copy.check_text ? `<p>${esc(copy.check_text)}</p>` : ""}<p class="sr-only">${esc(copy.check_parts.map((p) => p.label).join(", "))}.</p>${copy.check_credit ? `<p class="check-credit">${esc(copy.check_credit)}</p>` : ""}</figcaption>
     </figure>`;
@@ -666,7 +665,7 @@ const FAB_JS = `
   const lerpLog = (a, b, t) => Math.exp(lerp(Math.log(a), Math.log(b), t));
   const f3 = (v) => Math.round(v * 1000) / 1000;
   const fine = (v) => Math.round(v * 1e6) / 1e6; // zoom keeps more digits: a rounded zoom jolts the whole view
-  let t = 0, playing = false, visible = false, frame = 0, last = 0, started = false, shown = -1;
+  let t = 0, playing = false, visible = false, frame = 0, last = null, started = false, shown = -1;
 
   function text(i) {
     if (shown === i) return;
@@ -739,15 +738,28 @@ const FAB_JS = `
     steps.forEach((b, j) => { b.style.setProperty("--p", f3(clamp((t - T0[j]) / DUR[j]))); b.toggleAttribute("aria-current", j === i && t < END); });
   }
   function tick(now) {
-    const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 0;
+    frame = 0;
+    if (!playing || !visible || document.hidden) { last = null; return; }
+    // Keep real-time playback through low frame rates; limit only long foreground stalls.
+    const dt = last === null ? 0 : Math.min((now - last) / 1000, 0.25);
     last = now;
-    if (playing) { t = Math.min(TOTAL, t + dt); render(); if (t >= TOTAL) setPlaying(false); }
-    frame = playing && visible ? requestAnimationFrame(tick) : 0;
+    t = Math.min(TOTAL, t + dt);
+    render();
+    if (t >= TOTAL) setPlaying(false);
+    else frame = requestAnimationFrame(tick);
   }
-  const run = () => { if (!frame && playing && visible) { last = 0; frame = requestAnimationFrame(tick); } };
+  const run = () => {
+    const active = playing && visible && !document.hidden;
+    fabStage.classList.toggle("paused", !active);
+    if (!active) {
+      if (frame) cancelAnimationFrame(frame);
+      frame = 0; last = null;
+    } else if (!frame) {
+      last = null; frame = requestAnimationFrame(tick);
+    }
+  };
   function setPlaying(on) {
     playing = on;
-    fabStage.classList.toggle("paused", !on);
     pauseBtn.setAttribute("aria-pressed", String(!on));
     pauseBtn.querySelector("span").textContent = on ? "Pause" : "Play";
     replay.classList.toggle("prime", !on && t >= TOTAL);
@@ -761,13 +773,28 @@ const FAB_JS = `
     if (visible && !started && !still.matches) { started = true; setPlaying(true); }
     run();
   }, { threshold: 0.35 }).observe(fabStage);
-  document.addEventListener("visibilitychange", () => { visible = !document.hidden && visible; run(); });
+  document.addEventListener("visibilitychange", run);
   // The photograph-and-plan comparison under the line.
   const check = root.querySelector("[data-check]");
   if (check) {
     const stage = check.querySelector(".check-stage"), range = check.querySelector(".check-range");
-    const set = () => { stage.style.setProperty("--cut", range.value + "%"); range.setAttribute("aria-valuetext", range.value + "% photograph"); };
-    range.addEventListener("input", set); set();
+    const set = () => { stage.style.setProperty("--cut", range.value + "%"); range.setAttribute("aria-valuetext", (100 - Number(range.value)) + "% " + range.dataset.overlayLabel); };
+    range.addEventListener("input", set);
+    const drag = (event) => {
+      const box = stage.getBoundingClientRect();
+      range.value = String(Math.round(clamp((event.clientX - box.left) / box.width) * 100));
+      set();
+    };
+    stage.addEventListener("pointerdown", (event) => {
+      if (!event.isPrimary || event.button !== 0) return;
+      range.focus({ preventScroll: true });
+      stage.setPointerCapture(event.pointerId);
+      drag(event);
+    });
+    stage.addEventListener("pointermove", (event) => {
+      if (stage.hasPointerCapture(event.pointerId)) drag(event);
+    });
+    set();
   }
   window.__fab = { seek: (s) => { t = s; render(); }, pause: () => setPlaying(false), T0, END, TOTAL };
   if (still.matches) t = TOTAL;

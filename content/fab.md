@@ -24,6 +24,7 @@ check_text: >
   Its design is not published, so its parts were worked out from the
   silicon. Drag to compare the photograph with that plan.
 check_slider: Compare the photograph with the plan of its parts
+check_overlay_label: plan overlay
 check_photo_label: Photograph
 check_plan_label: Plan
 check_credit: PIC12F683 die. Photograph and analysis by Andrew D. Zonenberg.

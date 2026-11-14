@@ -13,6 +13,13 @@ python3 -m http.server 8814 --directory out
 
 Open `http://localhost:8814/site-preview.html`. Without the separately held production assets, this local preview uses system fonts and omits the two exhibit images. The `/ite3/` companion and its carousel also require a companion build.
 
+## Playback checks
+
+After building, run `node --test tests/fab-playback.test.mjs`. These checks cover
+elapsed-time playback, pause/resume, offscreen and hidden-tab behaviour, and
+reduced motion. Visually check the photograph overlay and its native range and
+drag controls at desktop and phone widths.
+
 ## Production builds
 
 The Vercel project builds this repository. Production builds retrieve a pinned revision of the private production asset bundle, including the existing scoped `/ite3/` companion and its notices. They fail if the bundle, the font, a referenced image, the companion or the observability configuration is missing. The private bundle is not licensed under this repository's Apache licence.
