@@ -18,11 +18,7 @@ closing: >
 # Source: Andrew D. Zonenberg, PIC12F683 report (2025), figure 25, as used in
 # the ITE3 companion's Chip Detective.
 check_image: exhibits/pic-die.webp
-check_title: A real chip, and the plan of its parts
-check_text: >
-  This microcontroller was photographed after its top layers were removed.
-  Its design is not published, so its parts were worked out from the
-  silicon. Drag to compare the photograph with that plan.
+check_title: There's more than meets the eye in every chip
 check_slider: Compare the photograph with the plan of its parts
 check_overlay_label: plan overlay
 check_photo_label: Photograph
