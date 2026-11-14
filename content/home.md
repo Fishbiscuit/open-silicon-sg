@@ -2,10 +2,6 @@
 hero_eyebrow: Singapore's open silicon hub
 hero_title: Anyone should be able to make a chip
 hero_emphasis: Anyone
-# Under the introduction: the next event with a sign-up link, taken from
-# content/events. Leave hero_next_label out to hide it.
-hero_next_label: Next workshop
-hero_next_all: All dates
 hero_lede: >
   We bring people together in Singapore to design chips with open tools and
   work towards making them.
