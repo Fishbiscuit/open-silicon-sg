@@ -395,6 +395,7 @@
     done = on;
     replay.classList.toggle("prime", on);
     if (on) {
+      setPlaying(false);
       beats.forEach((b) => { show(b.obj, 0); show(b.die, 0); show(b.cells, 0); blur(b.obj, 0); blur(b.die, 0); blur(b.cells, 0); });
       if (OP) { show(openLayer, 0); blur(openLayer, 0); }
       if (EN) { drawEnd(END_LEN, cssScaleNow()); blur(endLayer, 0); }
@@ -459,6 +460,7 @@
     stage.classList.toggle("paused", !on);
     pauseBtn.setAttribute("aria-pressed", String(!on));
     pauseBtn.querySelector("span").textContent = on ? "Pause" : "Play";
+    pauseBtn.querySelector("path").setAttribute("d", on ? "M5 3v10M11 3v10" : "M5 3l8 5-8 5Z");
     run();
   };
 
