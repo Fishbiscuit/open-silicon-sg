@@ -23,8 +23,8 @@ if (!process.env.RELEASE_ASSET_ROOT || !existsSync(join(companion, 'index.html')
   }
 }
 
-// Publish only the guest-facing invitation and its sharing image.
+// Publish only the guest-facing invitation, sharing image and icons.
 mkdirSync('public/symposium', { recursive: true });
-for (const name of ['index.html', 'og-image.png']) {
+for (const name of ['index.html', 'og-image.png', 'favicon.svg', 'favicon-32.png', 'apple-touch-icon.png']) {
   cpSync(join(process.env.RELEASE_ASSET_ROOT, 'symposium', name), join('public/symposium', name));
 }
