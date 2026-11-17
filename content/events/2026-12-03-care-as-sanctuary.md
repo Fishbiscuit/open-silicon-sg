@@ -1,5 +1,5 @@
 ---
-title: Care as Sanctuary
+title: Sanctuary as Care
 kind: symposium
 start: 2026-12-03
 end: 2026-12-04
