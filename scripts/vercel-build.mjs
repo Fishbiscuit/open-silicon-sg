@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } fro
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const PIN = '874382881ca1bf168c4685ecd646ac9bd783d865';
+const PIN = '8b5ed7c2af359a67a15cfc8a909b6c4458a26f42';
 let bundle = process.env.LOCAL_RELEASE_ASSETS;
 if (!bundle) {
   if (!process.env.RELEASE_ASSET_SSH_KEY) throw new Error('Production assets unavailable: RELEASE_ASSET_SSH_KEY is required');
