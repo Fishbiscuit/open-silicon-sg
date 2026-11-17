@@ -22,3 +22,9 @@ if (!process.env.RELEASE_ASSET_ROOT || !existsSync(join(companion, 'index.html')
     writeFileSync(file, readFileSync(file, 'utf8').replace('</body>', companionSnippet + '</body>'));
   }
 }
+
+// Publish only the guest-facing invitation and its sharing image.
+mkdirSync('public/symposium', { recursive: true });
+for (const name of ['index.html', 'og-image.png']) {
+  cpSync(join(process.env.RELEASE_ASSET_ROOT, 'symposium', name), join('public/symposium', name));
+}
