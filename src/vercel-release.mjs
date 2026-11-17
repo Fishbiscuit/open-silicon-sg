@@ -28,3 +28,12 @@ mkdirSync('public/symposium', { recursive: true });
 for (const name of ['index.html', 'og-image.png', 'favicon.svg', 'favicon-32.png', 'apple-touch-icon.png']) {
   cpSync(join(process.env.RELEASE_ASSET_ROOT, 'symposium', name), join('public/symposium', name));
 }
+
+// The public programme contains only the sessions that anyone can attend.
+mkdirSync('public/showcase', { recursive: true });
+for (const name of ['index.html', 'threshold.png', 'share.jpg']) {
+  cpSync(join(process.env.RELEASE_ASSET_ROOT, 'showcase', name), join('public/showcase', name));
+}
+for (const name of ['favicon.svg', 'apple-touch-icon.png']) {
+  cpSync(join('public/symposium', name), join('public/showcase', name));
+}

@@ -14,7 +14,6 @@
 
 import { appendFile } from 'node:fs/promises';
 
-const ATTENDANCE = ['yes', 'ask', 'no'];
 const APPS = ['', 'telegram', 'whatsapp', 'signal'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const MAX_BODY = 16 * 1024;
@@ -26,7 +25,7 @@ function text(value, max) {
 export function validate(input) {
   const body = input && typeof input === 'object' ? input : {};
   const reply = {
-    attendance: ATTENDANCE.includes(body.attendance) ? body.attendance : '',
+    attendance: body.attendance === 'yes' ? 'yes' : '',
     name: text(body.name, 120),
     organisation: text(body.organisation, 160),
     email: text(body.email, 200),
@@ -36,7 +35,7 @@ export function validate(input) {
   };
   if (!reply.messagingApp) reply.messagingHandle = '';
   const errors = {};
-  if (!reply.attendance) errors.attendance = 'Choose whether you can join us.';
+  if (!reply.attendance) errors.attendance = 'This form is for confirming attendance. Please reopen the invitation to RSVP.';
   if (!reply.name) errors.name = 'Please enter your name.';
   if (!reply.email) errors.email = 'Please enter an email address we can reach you at.';
   else if (!EMAIL.test(reply.email)) errors.email = 'This email address looks incomplete.';
@@ -115,7 +114,8 @@ export default async function handler(req, res) {
   if (text(body && body.website, 200)) return plain ? page(res, 200, 'Thank you. We’ve received your reply.') : send(res, 200, { ok: true });
   const { reply, errors } = validate(body);
   if (Object.keys(errors).length) {
-    return plain ? page(res, 400, Object.values(errors).join(' ') + ' Please go back and check your reply.') : send(res, 400, { ok: false, errors });
+    const status = body?.attendance === 'no' || body?.attendance === 'ask' ? 409 : 400;
+    return plain ? page(res, status, Object.values(errors).join(' ') + ' Please go back and check your reply.') : send(res, status, { ok: false, errors });
   }
   reply.receivedAt = new Date().toISOString();
   reply.source = 'sanctuary-as-care-invitation';

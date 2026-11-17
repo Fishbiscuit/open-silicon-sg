@@ -8,3 +8,5 @@ venue: ArtScience Museum
 summary: A two-day symposium at In the Ether 3.
 public: true
 ---
+
+[View the public showcase programme](https://opensilicon.sg/showcase/).
