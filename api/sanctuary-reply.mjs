@@ -37,6 +37,7 @@ export function validate(input) {
   const errors = {};
   if (!reply.attendance) errors.attendance = 'This form is for confirming attendance. Please reopen the invitation to RSVP.';
   if (!reply.name) errors.name = 'Please enter your name.';
+  if (!reply.organisation) errors.organisation = 'Enter the organisation you represent, or Independent.';
   if (!reply.email) errors.email = 'Please enter an email address we can reach you at.';
   else if (!EMAIL.test(reply.email)) errors.email = 'This email address looks incomplete.';
   if (reply.messagingApp && !reply.messagingHandle) errors.messagingHandle = 'Add your messaging details, or choose None.';
