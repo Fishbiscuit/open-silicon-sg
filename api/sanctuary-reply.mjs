@@ -1,7 +1,5 @@
 // POST /api/sanctuary-reply
-// Receives a guest's reply from the Sanctuary as Care invitation, checks it and hands it to
-// the configured destination. Written as a Vercel Node function (default export taking
-// req and res), so it can sit in opensilicon.sg's api/ folder unchanged.
+// Validates guest RSVPs, saves a private backup, and forwards them to the organiser sheet.
 //
 // Where replies go is set by environment variables (see HANDOFF.md):
 //   SANCTUARY_REPLY_WEBHOOK   URL that receives each reply as JSON: the Google Apps Script web
@@ -9,10 +7,13 @@
 //                             coordination sheet
 //   SANCTUARY_REPLY_SECRET    shared token; sent as "Authorization: Bearer <secret>" and, because
 //                             Apps Script cannot read headers, as "token" in the body
+//   BLOB_READ_WRITE_TOKEN     token for the private Vercel RSVP backup store
 //   SANCTUARY_REPLY_FILE      local testing only: append each reply as a line of JSON
 // With none of these set, the function answers 503 and the page offers the copy fallback.
 
+import { randomUUID } from 'node:crypto';
 import { appendFile } from 'node:fs/promises';
+import { put } from '@vercel/blob';
 
 const APPS = ['', 'telegram', 'whatsapp', 'signal'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -70,7 +71,7 @@ function page(res, status, message) {
   res.end(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Sanctuary as Care Symposium</title><body style="margin:0;padding:12vh max(20px,8vw);background:#DAD7D0;color:#202123;font:18px/1.55 Georgia,serif"><p style="max-width:32em">${message}</p><p><a href="/symposium/" style="color:#843B70">Back to the invitation</a></p></body></html>`);
 }
 
-async function deliver(reply) {
+async function deliverToSheet(reply) {
   const webhook = process.env.SANCTUARY_REPLY_WEBHOOK;
   if (webhook) {
     const secret = process.env.SANCTUARY_REPLY_SECRET;
@@ -90,6 +91,34 @@ async function deliver(reply) {
     return;
   }
   throw Object.assign(new Error('No reply destination is configured'), { status: 503 });
+}
+
+async function saveBackup(reply, token) {
+  const id = randomUUID();
+  const timestamp = reply.receivedAt.replaceAll(':', '-');
+  await put(`rsvps/${timestamp}-${id}.json`, JSON.stringify({ id, ...reply }), {
+    access: 'private',
+    contentType: 'application/json',
+    token,
+    abortSignal: AbortSignal.timeout(8000),
+  });
+  return id;
+}
+
+async function storeReply(reply) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
+  if (!token) return deliverToSheet(reply);
+
+  // The providers are independent. Confirm receipt if either has durably saved the reply.
+  const [backup, sheet] = await Promise.allSettled([
+    saveBackup(reply, token),
+    deliverToSheet(reply),
+  ]);
+  if (backup.status === 'rejected') console.error('sanctuary-reply: private backup write failed');
+  if (sheet.status === 'rejected' && backup.status === 'fulfilled') {
+    console.error('sanctuary-reply: saved backup without organiser sheet acknowledgement', backup.value);
+  }
+  if (backup.status === 'rejected' && sheet.status === 'rejected') throw sheet.reason;
 }
 
 function send(res, status, payload) {
@@ -121,9 +150,9 @@ export default async function handler(req, res) {
   reply.receivedAt = new Date().toISOString();
   reply.source = 'sanctuary-as-care-invitation';
   try {
-    await deliver(reply);
+    await storeReply(reply);
   } catch (err) {
-    console.error('sanctuary-reply:', err.message);
+    console.error('sanctuary-reply: reply could not be stored');
     return plain
       ? page(res, err.status || 502, 'We couldn’t send your reply just now. Please reply in the thread where you received this invitation.')
       : send(res, err.status || 502, { ok: false });

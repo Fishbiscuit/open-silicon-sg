@@ -1,5 +1,10 @@
 {
   "name": "open-silicon-sg",
   "private": true,
-  "scripts": { "build": "node scripts/vercel-build.mjs" }
+  "scripts": {
+    "build": "node scripts/vercel-build.mjs"
+  },
+  "dependencies": {
+    "@vercel/blob": "2.8.0"
+  }
 }
