@@ -26,9 +26,10 @@ function text(value, max) {
 export function validate(input) {
   const body = input && typeof input === 'object' ? input : {};
   const reply = {
-    attendance: body.attendance === 'yes' ? 'yes' : '',
+    attendance: body.attendance === 'request' || body.attendance === 'yes' ? 'yes' : '',
     name: text(body.name, 120),
     organisation: text(body.organisation, 160),
+    role: text(body.role, 160),
     email: text(body.email, 200),
     messagingApp: APPS.includes(body.messagingApp) ? body.messagingApp : '',
     messagingHandle: text(body.messagingHandle, 80),
@@ -36,9 +37,10 @@ export function validate(input) {
   };
   if (!reply.messagingApp) reply.messagingHandle = '';
   const errors = {};
-  if (!reply.attendance) errors.attendance = 'This form is for confirming attendance. Please reopen the invitation to RSVP.';
+  if (!reply.attendance) errors.attendance = 'Please reopen the invitation to request a place.';
   if (!reply.name) errors.name = 'Please enter your name.';
   if (!reply.organisation) errors.organisation = 'Enter the organisation you represent, or Independent.';
+  if (body.attendance === 'request' && !reply.role) errors.role = 'Please enter your job title or role.';
   if (!reply.email) errors.email = 'Please enter an email address we can reach you at.';
   else if (!EMAIL.test(reply.email)) errors.email = 'This email address looks incomplete.';
   if (reply.messagingApp && !reply.messagingHandle) errors.messagingHandle = 'Add your messaging details, or choose None.';
@@ -148,7 +150,8 @@ export default async function handler(req, res) {
     return plain ? page(res, status, Object.values(errors).join(' ') + ' Please go back and check your reply.') : send(res, status, { ok: false, errors });
   }
   reply.receivedAt = new Date().toISOString();
-  reply.source = 'sanctuary-as-care-invitation';
+  reply.source = 'sanctuary-as-care-attendance-request';
+  reply.reviewStatus = 'Pending review';
   try {
     await storeReply(reply);
   } catch (err) {
@@ -157,5 +160,5 @@ export default async function handler(req, res) {
       ? page(res, err.status || 502, 'We couldn’t send your reply just now. Please reply in the thread where you received this invitation.')
       : send(res, err.status || 502, { ok: false });
   }
-  return plain ? page(res, 200, 'Thank you. We’ve received your reply and will be in touch.') : send(res, 200, { ok: true });
+  return plain ? page(res, 200, 'Thank you. We’ve received your request. We’ll review it and email you separately to confirm your place.') : send(res, 200, { ok: true });
 }
