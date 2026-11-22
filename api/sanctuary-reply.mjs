@@ -26,7 +26,7 @@ function text(value, max) {
 export function validate(input) {
   const body = input && typeof input === 'object' ? input : {};
   const reply = {
-    attendance: body.attendance === 'request' || body.attendance === 'yes' ? 'yes' : '',
+    attendance: body.attendance === 'request' ? 'yes' : '',
     name: text(body.name, 120),
     organisation: text(body.organisation, 160),
     role: text(body.role, 160),
@@ -40,7 +40,7 @@ export function validate(input) {
   if (!reply.attendance) errors.attendance = 'Please reopen the invitation to request a place.';
   if (!reply.name) errors.name = 'Please enter your name.';
   if (!reply.organisation) errors.organisation = 'Enter the organisation you represent, or Independent.';
-  if (body.attendance === 'request' && !reply.role) errors.role = 'Please enter your job title or role.';
+  if (!reply.role) errors.role = 'Please enter your job title or role.';
   if (!reply.email) errors.email = 'Please enter an email address we can reach you at.';
   else if (!EMAIL.test(reply.email)) errors.email = 'This email address looks incomplete.';
   if (reply.messagingApp && !reply.messagingHandle) errors.messagingHandle = 'Add your messaging details, or choose None.';
@@ -144,6 +144,11 @@ export default async function handler(req, res) {
   }
   // A filled hidden field means a bot; answer as if accepted and keep nothing.
   if (text(body && body.website, 200)) return plain ? page(res, 200, 'Thank you. We’ve received your reply.') : send(res, 200, { ok: true });
+  // An older invitation tab would show “attendance confirmed” after a successful reply.
+  if (body?.attendance === 'yes') {
+    const message = 'The RSVP form has changed. Please reopen the invitation to request a place.';
+    return plain ? page(res, 409, message) : send(res, 409, { ok: false, errors: { attendance: message } });
+  }
   const { reply, errors } = validate(body);
   if (Object.keys(errors).length) {
     const status = body?.attendance === 'no' || body?.attendance === 'ask' ? 409 : 400;
