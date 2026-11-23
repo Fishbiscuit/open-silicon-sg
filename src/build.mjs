@@ -5,7 +5,7 @@
 //     out/colours.html    the colour study
 //   and a *-preview.html full document of each for local preview.
 // Words, events and exhibits come from content/; colours from design/schemes.mjs.
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { cpSync, readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { k, THEME_CSS, esc, r2, emphasise } from "./lib.mjs";
@@ -440,3 +440,11 @@ ${fab.js}
 ${readFileSync(join(HERE, "atmosphere.js"), "utf8")}
 ${readFileSync(join(HERE, "highlight.js"), "utf8")}</script>`, HEAD(C.site.title));
 
+const taBriefingRoute = "tinytapeout-TA";
+const taBriefing = readFileSync(CONTENT(taBriefingRoute + "/index.html"), "utf8");
+const taBriefingCss = schemeCss({ lightOnly: true }) + "\n" + readFileSync(join(HERE, "tinytapeout-ta.css"), "utf8");
+mkdirSync(OUT(taBriefingRoute), { recursive: true });
+cpSync(CONTENT(taBriefingRoute + "/screenshots"), OUT(taBriefingRoute + "/screenshots"), { recursive: true });
+writeFileSync(OUT(taBriefingRoute + "/index.html"), taBriefing
+  .replace("<!-- site icon -->", () => faviconLink(C.site))
+  .replace("<!-- page styles -->", () => "<style>" + taBriefingCss + "</style>"));

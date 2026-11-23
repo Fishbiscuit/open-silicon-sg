@@ -37,3 +37,7 @@ for (const name of ['index.html', 'threshold.png', 'share.jpg']) {
 for (const name of ['favicon.svg', 'apple-touch-icon.png']) {
   cpSync(join('public/symposium', name), join('public/showcase', name));
 }
+
+mkdirSync('public/tinytapeout-TA', { recursive: true });
+cpSync('out/tinytapeout-TA/index.html', 'public/tinytapeout-TA/index.html');
+cpSync('out/tinytapeout-TA/screenshots', 'public/tinytapeout-TA/screenshots', { recursive: true });

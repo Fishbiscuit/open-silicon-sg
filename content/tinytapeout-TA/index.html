@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A hands-on refresher and troubleshooting guide for Tiny Tapeout workshop teaching assistants.">
+  <title>Tiny Tapeout TA briefing · Open Silicon SG</title>
+  <!-- site icon -->
+  <!-- page styles -->
+</head>
+<body>
+  <a class="skip" href="#main">Skip to briefing</a>
+  <header class="masthead">
+    <div class="wrap masthead-inner">
+      <a class="brand" href="https://opensilicon.sg/">Open Silicon SG</a>
+      <a href="#troubleshooting">Troubleshooting ↓</a>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <div class="intro">
+      <div class="wrap">
+        <h1>Tiny Tapeout<br>TA briefing</h1>
+        <p>Work through these 3 exercises before assisting. During the workshop, jump to the step where a participant is stuck. Tap any screenshot to open it full size.</p>
+        <nav aria-label="Jump to an exercise">
+          <ol class="exercise-links">
+            <li><a href="#siliwiz"><span class="tool">SiliWiz</span><span>Draw a transistor</span></a></li>
+            <li><a href="#wokwi"><span class="tool">Wokwi</span><span>Simulate a logic gate</span></a></li>
+            <li><a href="#submit"><span class="tool">Tiny Tapeout + GitHub</span><span>Build and submit a chip layout</span></a></li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <div class="wrap guide">
+      <nav class="guide-nav" aria-label="On this page">
+        <a href="#before">Before you start</a>
+        <a href="#siliwiz">1. SiliWiz</a>
+        <a href="#wokwi">2. Wokwi</a>
+        <a href="#submit">3. Build and submit</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+        <a href="#ready">Before you assist</a>
+      </nav>
+      <div class="guide-content">
+        <section id="before" aria-labelledby="before-title">
+          <h2 id="before-title">Before you start</h2>
+          <ul class="prep">
+            <li>Open the September training recording from the original TA training email. Ask the workshop lead for access if needed.</li>
+            <li>Use a laptop and sign in to <a href="https://wokwi.com/">Wokwi</a> and <a href="https://github.com/login">GitHub</a>. <a href="https://github.com/signup">Create a GitHub account</a> if you need one.</li>
+            <li>Confirm the assigned shuttle and where to get your training coupon with the workshop lead. A shuttle is a shared chip manufacturing run.</li>
+          </ul>
+        </section>
+
+        <section id="siliwiz" aria-labelledby="siliwiz-title">
+          <p class="tool">Task 1 · SiliWiz</p>
+          <h2 id="siliwiz-title">Draw a transistor</h2>
+          <p>Build an NMOS transistor and see how the gate voltage controls the flow of current.</p>
+          <div class="actions">
+            <a class="primary" href="https://app.siliwiz.com/?preset=nmosfet_start">Open the SiliWiz starter</a>
+            <a href="https://tinytapeout.com/guides/workshop/draw-a-mosfet-faster/">Illustrated guide</a>
+          </div>
+          <ol class="steps">
+            <li><strong>Find the ground connection.</strong> Select <b>Cross Section &amp; DRC</b> above the right panel. Drag the blue slider beside the canvas down until its horizontal line crosses the existing <code>vss</code> pad in the lower right. This is the p tap that grounds the substrate. Leave it in place.
+              <figure class="step-shot">
+                <a href="screenshots/siliwiz-starter.jpg" target="_blank"><img src="screenshots/siliwiz-starter.jpg" width="1063" height="542" loading="lazy" alt="SiliWiz starter with the horizontal cross-section line over the existing ground pad"></a>
+                <figcaption>Start here. Keep the lower-right <code>vss</code> pad.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Draw the active area.</strong> In the layers list, select <b>n diffusion</b>. Click and drag on the canvas to draw a square in the middle.</li>
+            <li><strong>Draw the gate.</strong> Choose <b>polysilicon</b> and draw a narrow vertical strip all the way across the square. Extend it above and below the square. Move the slider through the gate and check that the cross-section shows an n-type region on either side.</li>
+            <li><strong>Add 3 contacts.</strong> Choose <b>metal1 via</b>. Put 1 contact inside the diffusion on each side of the gate. Place the third contact on the polysilicon extension outside the square.</li>
+            <li><strong>Add metal pads.</strong> Select <b>metal1</b> and draw a small rectangle over each via. Keep the 3 pads separate.</li>
+            <li><strong>Label the pads.</strong> Click each new metal pad and choose <b>Set Label</b>. Use <code>in</code> for the gate, <code>vss</code> for one diffusion pad (source) and <code>vdd</code> for the other (drain). Drag the slider to the middle of the transistor to check the result.
+              <figure class="step-shot">
+                <a href="screenshots/siliwiz-cross-section.jpg" target="_blank"><img src="screenshots/siliwiz-cross-section.jpg" width="1063" height="542" loading="lazy" alt="Completed transistor layout and cross-section with two diffusion regions separated by the gate and DRC OK"></a>
+                <figcaption>Compare the 3 new pads on the canvas. In the right panel, look for two diffusion regions with the gate between them and <b>DRC OK</b>.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Run the simulation.</strong> Select <b>Simulation</b> beside <b>Cross Section &amp; DRC</b>. Watch the blue <code>in</code> trace (gate voltage) and the orange current trace. The orange trace starts flat, then climbs as the gate voltage rises.
+              <figure class="step-shot">
+                <a href="screenshots/siliwiz-simulation.jpg" target="_blank"><img src="screenshots/siliwiz-simulation.jpg" width="1063" height="505" loading="lazy" alt="SiliWiz graph showing the blue input rising and the orange current rising after it"></a>
+                <figcaption>A working transistor switches on. Look for the orange curve rising after the blue line starts.</figcaption>
+              </figure>
+            </li>
+          </ol>
+          <p class="check"><strong>Check your work.</strong> You can see regions on both sides of the gate, and the drain current rises as the transistor turns on. Compare with the <a href="https://app.siliwiz.com/?preset=nmosfet">completed SiliWiz example</a> in a separate tab.</p>
+          <details id="siliwiz-fix">
+            <summary>Cross-section looks wrong or current stays flat</summary>
+            <div>
+              <p><strong>Missing regions?</strong> Move the slider to cut through both diffusion regions and the gate. Check that the polysilicon crosses the entire square on the correct layer.</p>
+              <p><strong>Current stays flat?</strong> Check the labels exactly, then inspect each metal pad, via and the material beneath it. Look for touching pads and check the original p tap still connects to <code>vss</code>. Fix one issue at a time and rerun the simulation.</p>
+            </div>
+          </details>
+        </section>
+
+        <section id="wokwi" aria-labelledby="wokwi-title">
+          <p class="tool">Task 2 · Wokwi</p>
+          <h2 id="wokwi-title">Build and simulate a logic gate</h2>
+          <p>Use a 2-input AND gate for this refresher. The output is 1 only when both inputs are 1.</p>
+          <div class="actions">
+            <a class="primary" href="https://wokwi.com/projects/354858054593504257">Open the Wokwi starter</a>
+            <a href="https://tinytapeout.com/guides/workshop/simulate-a-gate/">Illustrated guide</a>
+          </div>
+          <ol class="steps">
+            <li><strong>Make your own copy.</strong> Open the arrow menu beside <b>Save</b> and choose <b>Save a copy</b>. Give your copy a name and save it. If you can’t save, sign in first.
+              <figure class="step-shot">
+                <a href="https://tinytapeout.com/guides/workshop/simulate-a-gate/images/save_a_copy.png" target="_blank"><img src="https://tinytapeout.com/guides/workshop/simulate-a-gate/images/save_a_copy.png" width="570" height="532" loading="lazy" alt="Wokwi's Save menu with Save a copy selected"></a>
+                <figcaption>Use <b>Save a copy</b> in the menu beside <b>Save</b>.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Test the starter.</strong> Press green <b>Play</b> at the top of the simulation pane. Toggle one of the first 4 red switches. Its corresponding display segment should respond. Each starting gate is an inverter, which flips the input value.
+              <figure class="step-shot">
+                <a href="screenshots/wokwi-starter.jpg" target="_blank"><img src="screenshots/wokwi-starter.jpg" width="585" height="292" loading="lazy" alt="Running Wokwi template with red input switches, four inverters between green blocks, and lit display segments"></a>
+                <figcaption>Follow left to right from the red switches, through the green blocks and the 4 inverters, to the display.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Clear the old logic.</strong> Press <b>Stop</b>. Click each of the 4 inverters and press <b>Delete</b>. Keep the green blocks and the switches, display and wiring outside them.</li>
+            <li><strong>Place the AND gate.</strong> Open <b>+</b>, scroll to <b>Logic</b>, and select <b>AND</b>. Drag it into the space between the 2 green blocks.</li>
+            <li><strong>Draw 3 wires.</strong> Click a port to start a wire and click the destination port to finish it. Click an empty spot along the way if you need a corner.
+              <ul>
+                <li><b>IN0</b> on the right edge of the green input block → AND input A.</li>
+                <li><b>IN1</b> on that same edge → AND input B.</li>
+                <li>AND output → <b>OUT0</b> on the left edge of the green output block.</li>
+              </ul>
+              <figure class="step-shot">
+                <a href="https://tinytapeout.com/guides/workshop/simulate-a-gate/images/and_gate_wired.png" target="_blank"><img src="https://tinytapeout.com/guides/workshop/simulate-a-gate/images/and_gate_wired.png" width="778" height="267" loading="lazy" alt="Wokwi AND gate connected to input and output blocks with three wires"></a>
+                <figcaption>Match the 3 wires attached to the purple gate. Use the data ports <b>IN0</b> and <b>IN1</b> just below the clock and reset.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Run all 4 tests.</strong> Press <b>Play</b>. Toggle the first 2 switches through the combinations shown below. Watch the display segment connected to your first output.</li>
+            <li><strong>Save your working circuit.</strong> Press <b>Stop</b>, save, and copy the URL of your own Wokwi project. You’ll use it in Task 3.</li>
+          </ol>
+          <table class="truth">
+            <caption>AND gate truth table</caption>
+            <thead><tr><th scope="col">Input A</th><th scope="col">Input B</th><th scope="col">Output</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>0</td><td>0</td></tr>
+              <tr><td>0</td><td>1</td><td>0</td></tr>
+              <tr><td>1</td><td>0</td><td>0</td></tr>
+              <tr class="on"><td>1</td><td>1</td><td>1</td></tr>
+            </tbody>
+          </table>
+          <p class="check"><strong>Check your work.</strong> The corresponding display segment lights only for the 1 + 1 input combination. The saved URL opens your copy.</p>
+          <details id="wokwi-fix">
+            <summary>Simulation fails or the output is wrong</summary>
+            <div>
+              <p><strong>Simulator shows ERC warnings?</strong> Read the first electrical rules warning. Follow that wire to both endpoints. Check for an unsnapped connection, a wire shorting signals together, or 2 outputs driving the same wire.</p>
+              <p><strong>Output never changes?</strong> Stop the simulation. Trace each input from its switch through the green input block to the gate. Trace the result through the green output block to the display. Check that you’re watching the segment for the output you actually used.</p>
+              <p><strong>Still stuck?</strong> Run the original starter in another tab. If its switches work, compare its connections with the saved circuit. After any change, run all 4 test combinations again.</p>
+            </div>
+          </details>
+        </section>
+
+        <section id="submit" aria-labelledby="submit-title">
+          <p class="tool">Task 3 · Tiny Tapeout + GitHub</p>
+          <h2 id="submit-title">Build and submit the chip layout</h2>
+          <p>Use your Wokwi circuit to generate a GDS file, which describes the physical layout of the chip. Tiny Tapeout runs the checks before the design can go into the assigned manufacturing run.</p>
+          <div class="actions">
+            <a class="primary" href="https://app.tinytapeout.com/projects/create/wokwi">Open the Wokwi submission wizard</a>
+            <a href="https://tinytapeout.com/guides/workshop/create-your-gds/">Illustrated guide</a>
+          </div>
+          <ol class="steps">
+            <li><strong>Sign in to the wizard.</strong> Open the Wokwi submission wizard and choose <b>Sign in with GitHub</b>.
+              <figure class="step-shot">
+                <a href="screenshots/submission-sign-in.jpg" target="_blank"><img src="screenshots/submission-sign-in.jpg" width="935" height="197" loading="lazy" alt="Tiny Tapeout Wokwi submission wizard with the Sign in with GitHub button"></a>
+                <figcaption>Use the same GitHub account that should own the project repository.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Paste the project link and choose the run.</strong> In <b>Project Information</b>, paste the URL of the Wokwi copy you saved. In the run dropdown, select the shuttle assigned by the lead and continue.
+              <figure class="step-shot">
+                <a href="https://tinytapeout.com/guides/workshop/create-your-gds/images/submission_portal_step1_filled.png" target="_blank"><img src="https://tinytapeout.com/guides/workshop/create-your-gds/images/submission_portal_step1_filled.png" width="823" height="758" loading="lazy" alt="Tiny Tapeout Project Information example with the project link and manufacturing run filled in"></a>
+                <figcaption>Tiny Tapeout’s example shows the 2 fields to look for. Use your own project link and the run assigned for your session.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Fill in the design details.</strong> In <b>Project Details</b>, enter a title, a short description and labels for the pins you used. For the AND example, label the first 2 inputs A and B and the first output Y. This circuit does not use a clock.
+              <figure class="step-shot">
+                <a href="https://tinytapeout.com/guides/workshop/create-your-gds/images/submission_portal_step2.png" target="_blank"><img src="https://tinytapeout.com/guides/workshop/create-your-gds/images/submission_portal_step2.png" width="823" height="758" loading="lazy" alt="Tiny Tapeout Project Details screen with title, description, clock and pin label fields"></a>
+                <figcaption>Use the example to locate the fields. Fill them in for your own design.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Create the GitHub repository.</strong> Under <b>Create &amp; Build</b>, choose <b>Authorize GitHub</b> if prompted. Check the active GitHub account, then choose <b>Create Repo</b>. Once the repository appears, open its link.
+              <figure class="step-shot">
+                <a href="https://tinytapeout.com/guides/workshop/create-your-gds/images/submission_portal_step3_create_repo.png" target="_blank"><img src="https://tinytapeout.com/guides/workshop/create-your-gds/images/submission_portal_step3_create_repo.png" width="820" height="480" loading="lazy" alt="Tiny Tapeout Create and Build screen showing the Create Repo button"></a>
+                <figcaption>The portal creates the repository and starts the build.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Check the build.</strong> Open the repository’s <b>Actions</b> tab and select the latest <code>gds</code> run. On <b>Summary</b>, wait for <b>Success</b> and green checks beside both <code>gds</code> and <code>precheck</code>.
+              <figure class="step-shot">
+                <a href="https://tinytapeout.com/guides/workshop/create-your-gds/images/actions_button.png" target="_blank"><img src="https://tinytapeout.com/guides/workshop/create-your-gds/images/actions_button.png" width="1715" height="113" loading="lazy" alt="GitHub repository showing the Actions tab used to open the build run"></a>
+                <figcaption>Open <b>Actions</b> in GitHub to see the build status, logs and results.</figcaption>
+              </figure>
+              <figure class="step-shot">
+                <a href="screenshots/github-build-pass.jpg" target="_blank"><img src="screenshots/github-build-pass.jpg" width="986" height="447" loading="lazy" alt="Public GitHub Actions run showing Success and green checks for gds, precheck and viewer"></a>
+                <figcaption>A passing build has green checks on <code>gds</code> and <code>precheck</code>. <a href="https://github.com/krisjdev/tt-my-cool-project/actions/runs/25695377592">View this example run</a>.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Submit with the assigned coupon.</strong> Once the checks pass, return to the wizard’s <b>Submit to shuttle</b> screen. Recheck the run shown above it. Enter the assigned workshop code in <b>Coupon code</b>, then choose <b>Submit</b>. If you’re missing a code, the code fails, or the portal asks you to pay, pause and ask the lead.
+              <figure class="step-shot">
+                <a href="https://tinytapeout.com/guides/workshop/create-your-gds/images/submission_portal_step4.png" target="_blank"><img src="https://tinytapeout.com/guides/workshop/create-your-gds/images/submission_portal_step4.png" width="818" height="686" loading="lazy" alt="Tiny Tapeout Submit to shuttle screen with the selected run above a blank coupon field"></a>
+                <figcaption>Check the run above the form and use the <b>Coupon code</b> field. The run shown here is an example.</figcaption>
+              </figure>
+            </li>
+            <li><strong>Verify and share the result.</strong> Check the portal shows the design as submitted for the assigned run. Copy its Tiny Tapeout project URL and share it in the private TA training thread. If you stopped at the build or precheck, tell the lead which stage you reached.</li>
+          </ol>
+          <p class="check"><strong>Check your work.</strong> The <code>gds</code> build and Precheck pass. For an authorised submission, you can show the portal status and the Tiny Tapeout link in the form <code>app.tinytapeout.com/projects/&lt;number&gt;</code>.</p>
+          <details id="submit-fix">
+            <summary>GitHub access, build, precheck or coupon problems</summary>
+            <div>
+              <p><strong>GitHub access error?</strong> Check the active GitHub account and have the participant complete the authorisation prompt. If Tiny Tapeout can’t read the design, check the Wokwi project link opens and points to the saved copy.</p>
+              <p><strong>Build is queued or running?</strong> Wait and check the latest run in <b>Actions</b>. Creating another repository won’t finish the existing run.</p>
+              <p><strong>Build or Precheck fails?</strong> Open the first failed step or check and read its error. If it points to the circuit, fix and save the Wokwi design. In the existing GitHub repository, open <b>Actions</b>, select the <code>gds</code> workflow, and choose <b>Run workflow</b>. Check the new run before attempting to submit.</p>
+              <p><strong>Wrong run, rejected coupon or unexpected amount?</strong> Pause before confirming and ask the workshop lead. Keep coupon details in the private team channel.</p>
+            </div>
+          </details>
+        </section>
+
+        <section id="troubleshooting" aria-labelledby="troubleshooting-title">
+          <h2 id="troubleshooting-title">Help a participant who’s stuck</h2>
+          <ol class="steps">
+            <li><strong>Find the step.</strong> Ask what they were trying to do, what they expected, and what actually happened.</li>
+            <li><strong>Check the last thing that worked.</strong> Jump to the relevant panel and expand it for <a href="#siliwiz-fix">SiliWiz</a>, <a href="#wokwi-fix">Wokwi</a>, or <a href="#submit-fix">submission</a>. Have the participant make one change and run the same test again.</li>
+            <li><strong>Hand off cleanly.</strong> If the issue persists, send the lead the task and step, the exact error, what you’ve already tried and, if relevant, the project link. Use the private team channel. Leave passwords and coupon codes out of screenshots and logs.</li>
+          </ol>
+        </section>
+
+        <section id="ready" aria-labelledby="ready-title">
+          <h2 id="ready-title">Before you assist</h2>
+          <ul class="prep">
+            <li>Show a SiliWiz transistor that turns on in simulation.</li>
+            <li>Show your saved Wokwi circuit passing all 4 AND gate tests.</li>
+            <li>Show your Tiny Tapeout project and its status. Share the submitted project link privately once the submission is complete.</li>
+          </ul>
+          <p>Check in with the workshop lead if you’re new to the rota or any step is unfinished.</p>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="wrap footer">
+    <a class="brand" href="https://opensilicon.sg/">Open Silicon SG</a>
+    <a href="https://tinytapeout.com/guides/workshop/">Workshop guide and reference screenshots ↗</a>
+    <a href="#main">Back to top ↑</a>
+  </footer>
+</body>
+</html>
