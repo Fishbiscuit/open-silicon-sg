@@ -1,0 +1,19 @@
+.vensa-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px 10px;
+  flex-wrap: wrap;
+  min-height: 44px;
+  color: inherit;
+  font: 500 14px/1.35 system-ui, sans-serif;
+  text-decoration: none;
+}
+
+.vensa-credit img {
+  display: block;
+  width: 142px;
+  height: auto;
+}
+
+.vensa-credit:hover span { text-decoration: underline; }
+.vensa-credit:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }

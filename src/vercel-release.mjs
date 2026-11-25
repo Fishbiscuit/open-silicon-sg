@@ -11,6 +11,8 @@ const snippet = `<script>window.va=window.va||function(){(window.vaq=window.vaq|
 const html = readFileSync('out/site-preview.html','utf8').replace('</body>',snippet+'</body>');
 mkdirSync('public',{recursive:true});writeFileSync('public/index.html',html);
 cpSync('assets/social-card.png', 'public/social-card.png');
+cpSync('src/vensa-credit.css', 'public/vensa-credit.css');
+cpSync(join(process.env.RELEASE_ASSET_ROOT, 'assets', 'vensa-wordmark.svg'), 'public/vensa-wordmark.svg');
 const companion = join(process.env.RELEASE_ASSET_ROOT || '', 'ite3');
 if (!process.env.RELEASE_ASSET_ROOT || !existsSync(join(companion, 'index.html')) || !existsSync(join(companion, 'aerolamp/index.html'))) throw new Error('Pinned companion bundle is missing');
 {

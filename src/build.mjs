@@ -40,7 +40,7 @@ const S = {
   site: { name: "string", wordmark: "string", wordmark_suffix: "string?", mark_symbol: "string?", mark_label: "string?", title: "string", social_description: "text?", social_image_alt: "text?", nav: "list", footer: "text?", github: "url?", credits: "text", credits_label: "string?" },
   home: {
     hero_eyebrow: "string", hero_title: "string", hero_emphasis: "string?", hero_lede: "text", hero_actions: "list?", hero_next_label: "string?", hero_next_all: "string?",
-    events_eyebrow: "string?", events_title: "string", events_emphasis: "string?", events_intro: "text?",
+    events_eyebrow: "string?", events_title: "string", events_emphasis: "string?", events_intro: "text?", events_support_label: "string?",
     exhibition_title: "string", exhibition_intro: "text?", exhibition_dates: "string?", exhibition_link: "url?", exhibition_link_label: "string?", exhibition_details_link: "url?", exhibition_details_label: "string?", exhibition_carousel_title: "string?", exhibition_all_label: "string?", exhibition_areas: "list?",
     about_eyebrow: "string?", about_title: "string", about_emphasis: "string?", about_text: "text", audiences: "list?", join_title: "string?", join: "list?",
   },
@@ -272,10 +272,16 @@ function eventsSection(home, events) {
   const group = (title, contents) => `<div class="ev-group"><h3>${title}</h3><div>${contents}</div></div>`;
   const list = (events) => `<ol class="ev-list">${events.map(item).join("")}</ol>`;
   const disclosure = (label, events) => `<details class="ev-more"><summary>${label}<span aria-hidden="true"></span></summary>${list(events)}</details>`;
+  const wordmark = assetExists("vensa-wordmark.svg")
+    ? `<img src="${assetUri("vensa-wordmark.svg", "content/home.md")}" width="1522" height="339" alt="Vensa">`
+    : " Vensa";
+  const supporter = home.events_support_label
+    ? `<a class="vensa-credit" href="https://vensa.si/"><span>${esc(home.events_support_label)}</span>${wordmark}</a>`
+    : "";
   return `
 <section class="block events gutter" id="events" aria-labelledby="events-title">
   <div class="wrap">
-    ${sectionHead("events-title", home.events_eyebrow, home.events_title, home.events_intro, "", home.events_emphasis)}
+    ${sectionHead("events-title", home.events_eyebrow, home.events_title, home.events_intro, supporter, home.events_emphasis)}
     ${group("Upcoming", `${next.length ? list(next) : `<p class="ev-empty">Nothing scheduled yet. New sessions appear here as soon as they are confirmed.</p>`}${more.length ? disclosure("Show more events", more) : ""}`)}
     ${past.length ? group("Past", disclosure("Show past events", past)) : ""}
   </div>
@@ -425,7 +431,7 @@ mkdirSync(OUT(""), { recursive: true });
 const figs = buildFigures(C.hero);
 const fab = fabScene({ copy: C.fab, site: C.site, checkImage: C.fab.check_image && assetExists(C.fab.check_image) ? assetUri(C.fab.check_image, "content/fab.md") : "" });
 
-write("site", `<style>${BASE_CSS({ lightOnly: true })}${fab.css}</style>
+write("site", `<style>${BASE_CSS({ lightOnly: true })}${fab.css}${readFileSync(join(HERE, "vensa-credit.css"), "utf8")}</style>
 ${siteHeader(C.site)}
 <main>
 ${heroSection(C.home, C.hero, figs, C.site, C.events)}

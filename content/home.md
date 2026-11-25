@@ -9,6 +9,7 @@ hero_lede: >
 events_eyebrow: Events
 events_title: What's on
 events_emphasis: on
+events_support_label: Workshops supported by
 
 exhibition_title: In the Ether 3
 exhibition_dates: 3 October to 6 December 2026 · ArtScience Museum
