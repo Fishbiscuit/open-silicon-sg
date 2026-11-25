@@ -37,7 +37,7 @@ const TODAY = process.env.BUILD_DATE ?? new Date().toLocaleDateString("en-CA", {
 // "?" marks an optional field. Keep these short: a field becomes required
 // only when the page cannot be drawn without it.
 const S = {
-  site: { name: "string", wordmark: "string", wordmark_suffix: "string?", mark_symbol: "string?", mark_label: "string?", title: "string", social_description: "text?", social_image_alt: "text?", nav: "list", footer: "text?", github: "url?", credits: "text", credits_label: "string?" },
+  site: { name: "string", wordmark: "string", wordmark_suffix: "string?", mark_symbol: "string?", mark_label: "string?", title: "string", social_description: "text?", social_image_alt: "text?", nav: "list", footer: "text?", footer_support_label: "string?", github: "url?", credits: "text", credits_label: "string?" },
   home: {
     hero_eyebrow: "string", hero_title: "string", hero_emphasis: "string?", hero_lede: "text", hero_actions: "list?", hero_next_label: "string?", hero_next_all: "string?",
     events_eyebrow: "string?", events_title: "string", events_emphasis: "string?", events_intro: "text?", events_support_label: "string?",
@@ -260,6 +260,14 @@ function upcomingSessions(events) {
   return sessions(events.filter((e) => lastDay(e) >= TODAY).sort((a, b) => a.data.start.localeCompare(b.data.start)));
 }
 
+function vensaCredit(label) {
+  if (!label) return "";
+  const mark = assetExists("vensa-wordmark.svg")
+    ? `<img src="${assetUri("vensa-wordmark.svg", "Vensa supporter credit")}" width="1522" height="339" alt="Vensa">`
+    : " Vensa";
+  return `<a class="vensa-credit" href="https://vensa.si/"><span>${esc(label)}</span>${mark}</a>`;
+}
+
 function eventsSection(home, events) {
   const upcoming = upcomingSessions(events);
   const past = sessions(events.filter((e) => lastDay(e) < TODAY).sort((a, b) => b.data.start.localeCompare(a.data.start)));
@@ -272,16 +280,10 @@ function eventsSection(home, events) {
   const group = (title, contents) => `<div class="ev-group"><h3>${title}</h3><div>${contents}</div></div>`;
   const list = (events) => `<ol class="ev-list">${events.map(item).join("")}</ol>`;
   const disclosure = (label, events) => `<details class="ev-more"><summary>${label}<span aria-hidden="true"></span></summary>${list(events)}</details>`;
-  const wordmark = assetExists("vensa-wordmark.svg")
-    ? `<img src="${assetUri("vensa-wordmark.svg", "content/home.md")}" width="1522" height="339" alt="Vensa">`
-    : " Vensa";
-  const supporter = home.events_support_label
-    ? `<a class="vensa-credit" href="https://vensa.si/"><span>${esc(home.events_support_label)}</span>${wordmark}</a>`
-    : "";
   return `
 <section class="block events gutter" id="events" aria-labelledby="events-title">
   <div class="wrap">
-    ${sectionHead("events-title", home.events_eyebrow, home.events_title, home.events_intro, supporter, home.events_emphasis)}
+    ${sectionHead("events-title", home.events_eyebrow, home.events_title, home.events_intro, vensaCredit(home.events_support_label), home.events_emphasis)}
     ${group("Upcoming", `${next.length ? list(next) : `<p class="ev-empty">Nothing scheduled yet. New sessions appear here as soon as they are confirmed.</p>`}${more.length ? disclosure("Show more events", more) : ""}`)}
     ${past.length ? group("Past", disclosure("Show past events", past)) : ""}
   </div>
@@ -334,7 +336,16 @@ function aboutSection(home) {
 }
 
 function siteFooter(site) {
-  return `<footer class="site-foot gutter"><div class="wrap"><div>${wordmark(site, 64)}${site.footer ? `<p>${inline(site.footer)}</p>` : ""}</div>${site.github ? `<a class="site-github" href="${esc(site.github)}">GitHub <span aria-hidden="true">↗</span></a>` : ""}</div></footer>`;
+  return `<footer class="site-foot gutter">
+  <div class="wrap">
+    <div>
+      ${wordmark(site, 64)}
+      ${site.footer ? `<p>${inline(site.footer)}</p>` : ""}
+      ${site.github ? `<div><a class="site-github" href="${esc(site.github)}">GitHub <span aria-hidden="true">↗</span></a></div>` : ""}
+    </div>
+    ${vensaCredit(site.footer_support_label)}
+  </div>
+</footer>`;
 }
 
 function proposalSection(p, sections) {

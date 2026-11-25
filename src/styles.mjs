@@ -296,7 +296,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .join h4{margin:0 0 6px;font-size:16px;font-weight:500;color:var(--text-strong)}
 .join p{margin:0;font-size:14px}
 .site-foot{border-top:1px solid var(--rule);padding-block:40px 56px;background:var(--bg-raised)}
-.site-foot .wrap{display:block}
+.site-foot .wrap{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px 32px}
 .site-foot p{margin:10px 0 0;max-width:56ch;font-size:14px}
 .site-github{display:inline-flex;align-items:center;gap:8px;min-height:44px;margin-top:12px;color:var(--accent);text-decoration:none}
 .site-github:hover{text-decoration:underline}
@@ -306,7 +306,7 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   [id]{scroll-margin-top:112px}
   .block{padding-block:56px}
   .s-head{grid-template-columns:1fr;align-items:start;margin-bottom:26px}
-  .join,.site-foot .wrap{grid-template-columns:1fr}
+  .join{grid-template-columns:1fr}
   .aud{grid-template-columns:minmax(0,1fr) 56px minmax(0,1fr);grid-template-rows:repeat(2,minmax(140px,1fr));gap:104px 0}
   .aud li:nth-child(odd){padding-right:10px}
   .aud li:nth-child(even){padding-left:10px}
