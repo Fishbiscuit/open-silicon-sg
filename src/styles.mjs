@@ -241,6 +241,10 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .ev-main{min-width:0}
 .ev .ev-meta{font-size:12px}
 .ev-signup{margin-top:10px}
+.ev-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ev-actions .btn{border-radius:4px;font-weight:600}
+.ev-actions .btn:hover{text-decoration:underline}
+.ev-actions + .ev-body{margin-top:8px}
 .ex-carousel{display:block;width:100%;height:410px;border:0;background:var(--surface)}
 .ex-areas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px;margin-top:28px}
 .ex-area{display:block;min-width:0;color:var(--text-strong);text-decoration:none}

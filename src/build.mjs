@@ -49,7 +49,7 @@ const S = {
   fab: { eyebrow: "string", title: "string", title_emphasis: "string?", intro: "text", lead_note: "string?", scrub_label: "string?", readout: "string?", closing_label: "string", closing_title: "string", closing: "text", stations: "list", check_image: "string?", check_title: "string?", check_text: "text?", check_slider: "string?", check_overlay_label: "string?", check_photo_label: "string?", check_plan_label: "string?", check_credit: "string?", check_parts: "list?" },
   proposal: { doc_label: "string", doc_date: "string", guide_title: "string", guide: "list", eyebrow: "string", title: "string", sub: "text", footer: "text" },
   section: { n: "string", id: "string", title: "string", claims: "list?", sitemap: "map?", timeline: "list?" },
-  event: { title: "string", kind: "workshop|talk|symposium|showcase|milestone", start: "date", end: "date?", confirmed: "boolean", window: "string?", time: "string?", venue: "string?", with: "list?", audience: "list?", level: "beginner|intermediate|advanced|all?", signup: "url?", summary: "text", public: "boolean?", source: "string?" },
+  event: { title: "string", kind: "workshop|talk|symposium|showcase|milestone", start: "date", end: "date?", confirmed: "boolean", window: "string?", time: "string?", venue: "string?", with: "list?", audience: "list?", level: "beginner|intermediate|advanced|all?", signup: "url?", signup_links: "list?", summary: "text", public: "boolean?", source: "string?" },
   exhibit: { title: "string", makers: "list", kind: "chip|device|material", invitation: "string?", summary: "text", companion: "url?", source_link: "url?", image: "string?", image_alt: "string?", image_credit: "string?", image_fit: "contain|cover?", public: "boolean?", source: "string?" },
   chip: { title: "string", makers: "list", summary: "text", shuttle: "string", process: "string?", tiles: "number?", status: "designed|submitted|made|tested", source: "url?", workshop: "string?", public: "boolean?" },
   partner: { name: "string", group: "enthusiasts|academia|government|industry|funder|host", role: "text", url: "url?", public: "boolean?" },
@@ -71,6 +71,7 @@ function load() {
   events.forEach((e) => {
     if (e.data.end && e.data.end < e.data.start) throw new ContentError(`${e.file}: "end" is before "start"`);
     if (!e.data.confirmed && !e.data.window) throw new ContentError(`${e.file}: unconfirmed events need a "window", such as "Late November 2026"`);
+    e.data.signup_links?.forEach((data, i) => check({ file: `${e.file}, sign-up link ${i + 1}`, data }, { label: "string", href: "url" }));
   });
   const exhibits = collection(CONTENT("exhibits"), S.exhibit).filter((d) => d.data.public !== false);
   const chips = collection(CONTENT("chips"), S.chip).filter((d) => d.data.public === true);
@@ -243,7 +244,7 @@ function sessions(events) {
   for (const e of events) {
     const d = e.data;
     const single = d.confirmed && (!d.end || d.end === d.start) && !e.body?.trim();
-    const key = single ? JSON.stringify([d.title, d.kind, d.summary, d.venue ?? "", d.time ?? "", d.signup ?? "", d.with ?? [], d.level ?? ""]) : null;
+    const key = single ? JSON.stringify([d.title, d.kind, d.summary, d.venue ?? "", d.time ?? "", d.signup ?? "", d.signup_links ?? [], d.with ?? [], d.level ?? ""]) : null;
     if (key && byKey.has(key)) { byKey.get(key).dates.push(d.start); continue; }
     const s = { ...e, dates: [d.start] };
     if (key) byKey.set(key, s);
@@ -274,7 +275,9 @@ function eventsSection(home, events) {
   const past = sessions(events.filter((e) => lastDay(e) < TODAY).sort((a, b) => b.data.start.localeCompare(a.data.start)));
   const item = ({ data: e, body, dates }) => {
     const meta = [e.venue, e.with?.length ? `with ${e.with.join(", ")}` : "", e.level ? `${e.level} level` : ""].filter(Boolean).join(" · ");
-    return `<li class="ev${dates.length > 1 ? " ev-series" : ""}">${sessionWhen(e, dates)}<div class="ev-main"><h4>${esc(e.title)}</h4><p>${inline(e.summary)}</p>${meta ? `<p class="ev-meta">${esc(meta)}</p>` : ""}${body ? `<div class="ev-body">${markdown(body)}</div>` : ""}${e.signup ? `<a class="btn prime ev-signup" href="${esc(e.signup)}" target="_blank" rel="noopener">Sign up</a>` : ""}</div><span class="ev-kind" data-kind="${e.kind}">${e.kind}</span></li>`;
+    const signupLinks = e.signup_links?.map(({ label, href }) =>
+      `<a class="btn prime" href="${esc(href)}">${esc(label)}<span aria-hidden="true">↗</span></a>`).join("");
+    return `<li class="ev${dates.length > 1 ? " ev-series" : ""}">${sessionWhen(e, dates)}<div class="ev-main"><h4>${esc(e.title)}</h4><p>${inline(e.summary)}</p>${meta ? `<p class="ev-meta">${esc(meta)}</p>` : ""}${signupLinks ? `<div class="ev-actions">${signupLinks}</div>` : ""}${body ? `<div class="ev-body">${markdown(body)}</div>` : ""}${e.signup ? `<a class="btn prime ev-signup" href="${esc(e.signup)}" target="_blank" rel="noopener">Sign up</a>` : ""}</div><span class="ev-kind" data-kind="${e.kind}">${e.kind}</span></li>`;
   };
   const next = upcoming.slice(0, 3);
   const more = upcoming.slice(3);
