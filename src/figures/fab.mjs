@@ -17,7 +17,7 @@ const XS = Array.from({ length: N }, (_, i) => i * SP);
 
 
 
-export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "" }) {
+export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "", inlineDrawing = true }) {
   // The first five machines (quartz to wafer) play as one quick step; the
   // hub's part of the story, from Design onwards, gets a step per machine.
   const STEPS = [{ m0: 0, m1: 4 }, ...XS.slice(5).map((_, k) => ({ m0: k + 5, m1: k + 5 }))];
@@ -527,7 +527,7 @@ export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "" }) {
     </div>
     <div class="fab-stage">
       <div class="keylight" aria-hidden="true"></div>
-      ${svg}
+      ${inlineDrawing ? svg : ""}
       <div class="vignette" aria-hidden="true"></div><div class="grain" aria-hidden="true"></div>
       ${lensSvg()}
       <div class="fab-corners" aria-hidden="true"><span style="top:0;left:0;color:var(--text)" data-fab-fig>Fig 4 · step 1 of ${STATIONS.length}</span><span style="top:0;right:0;text-transform:uppercase;letter-spacing:.12em" data-fab-title>${esc(STATIONS[0].name)}</span>${copy.readout ? `<span style="bottom:0;right:0">${esc(copy.readout)}</span>` : ""}</div>
@@ -542,7 +542,10 @@ export function fabScene({ W = 1200, H = 560, copy, site, checkImage = "" }) {
   </div>
   <script type="application/json" id="fab-data">${JSON.stringify({ W, H, anchors, xs: XS, over, close, lead, steps: STEPS, stations: STATIONS, closing: copy.closing, closingLabel: copy.closing_label, closingTitle: copy.closing_title }).replace(/</g, "\\u003c")}</script>
 </section>`;
-  return { css, html, js: FAB_JS };
+  const js = inlineDrawing ? FAB_JS : `
+document.querySelector("[data-fab] .fab-stage .keylight").insertAdjacentHTML("afterend", ${JSON.stringify(svg)});
+${FAB_JS}`;
+  return { css, html, js };
 }
 
 // The lens: what the carrier holds right now, seen from above and enlarged,

@@ -10,6 +10,8 @@ const a = config.analytics, s = config.speedInsights;
 const snippet = `<script>window.va=window.va||function(){(window.vaq=window.vaq||[]).push(arguments)};window.si=window.si||function(){(window.siq=window.siq||[]).push(arguments)};</script><script defer src="${attr(absolute(a.scriptSrc))}"${a.viewEndpoint ? ` data-view-endpoint="${attr(absolute(a.viewEndpoint))}"` : ''}${a.eventEndpoint ? ` data-event-endpoint="${attr(absolute(a.eventEndpoint))}"` : ''}></script><script defer src="${attr(absolute(s.scriptSrc))}"${s.endpoint ? ` data-endpoint="${attr(absolute(s.endpoint))}"` : ''}></script>`;
 const html = readFileSync('out/site-preview.html','utf8').replace('</body>',snippet+'</body>');
 mkdirSync('public',{recursive:true});writeFileSync('public/index.html',html);
+cpSync('out/home-motion.js', 'public/home-motion.js');
+cpSync(join(process.env.RELEASE_ASSET_ROOT, 'assets', 'ABC-Areal.woff2'), 'public/ABC-Areal.woff2');
 cpSync('assets/social-card.png', 'public/social-card.png');
 cpSync('src/vensa-credit.css', 'public/vensa-credit.css');
 cpSync(join(process.env.RELEASE_ASSET_ROOT, 'assets', 'vensa-wordmark.svg'), 'public/vensa-wordmark.svg');

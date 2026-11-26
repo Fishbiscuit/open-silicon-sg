@@ -28,6 +28,7 @@ const CONTENT = (p) => join(ROOT, "content", p);
 const OUT = (p) => join(ROOT, "out", p);
 const ASSET_ROOT = process.env.RELEASE_ASSET_ROOT ? join(process.env.RELEASE_ASSET_ROOT, "assets") : join(ROOT, "assets");
 const assetExists = (rel) => existsSync(join(ASSET_ROOT, rel));
+const externalHomeAssets = Boolean(process.env.RELEASE_ASSET_ROOT);
 const UNIT = Math.sqrt(1.6);
 // Events sort into upcoming and past by the Singapore date of the build
 // (preview another day with BUILD_DATE=YYYY-MM-DD).
@@ -375,7 +376,7 @@ function proposalSection(p, sections) {
 // ------------------------------------------------------------------ pages
 const font = (file, type) => `data:${type};base64,${readFileSync(join(ROOT, file)).toString("base64")}`;
 const ISO_CSS = k.ISO_CSS.replace(/\.iso\{[^}]*\}\s*\.iso\[data-theme="light"\]\{[^}]*\}/, ""); // tokens come from design/schemes.mjs
-const BASE_CSS = (options = {}) => `${assetExists("ABC-Areal.woff2") ? `@font-face{font-family:"ABC Areal";src:url(data:font/woff2;base64,${readFileSync(join(ASSET_ROOT, "ABC-Areal.woff2")).toString("base64")}) format("woff2");font-weight:100 900;font-display:swap}` : ""}
+const BASE_CSS = (options = {}) => `${assetExists("ABC-Areal.woff2") ? '@font-face{font-family:"ABC Areal";src:url(/ABC-Areal.woff2) format("woff2");font-weight:100 900;font-display:swap}' : ""}
 ${schemeCss(options)}
 ${ISO_CSS}
 ${THEME_CSS}
@@ -440,7 +441,17 @@ try {
 }
 mkdirSync(OUT(""), { recursive: true });
 const figs = buildFigures(C.hero);
-const fab = fabScene({ copy: C.fab, site: C.site, checkImage: C.fab.check_image && assetExists(C.fab.check_image) ? assetUri(C.fab.check_image, "content/fab.md") : "" });
+const fab = fabScene({
+  copy: C.fab,
+  site: C.site,
+  checkImage: C.fab.check_image && assetExists(C.fab.check_image) ? assetUri(C.fab.check_image, "content/fab.md") : "",
+  inlineDrawing: !externalHomeAssets,
+});
+const homeMotion = `${readFileSync(join(HERE, "hero.js"), "utf8")}
+${fab.js}
+${readFileSync(join(HERE, "atmosphere.js"), "utf8")}
+${readFileSync(join(HERE, "highlight.js"), "utf8")}`;
+if (externalHomeAssets) writeFileSync(OUT("home-motion.js"), homeMotion);
 
 write("site", `<style>${BASE_CSS({ lightOnly: true })}${fab.css}${readFileSync(join(HERE, "vensa-credit.css"), "utf8")}</style>
 ${siteHeader(C.site)}
@@ -452,10 +463,8 @@ ${exhibitionSection(C.home, C.exhibits)}
 ${aboutSection(C.home)}
 </main>
 ${siteFooter(C.site)}
-<script type="module">${readFileSync(join(HERE, "hero.js"), "utf8")}
-${fab.js}
-${readFileSync(join(HERE, "atmosphere.js"), "utf8")}
-${readFileSync(join(HERE, "highlight.js"), "utf8")}</script>`, HEAD(C.site.title));
+${externalHomeAssets ? '<script type="module" src="/home-motion.js"></script>' : `<script type="module">${homeMotion}</script>`}`,
+HEAD(C.site.title) + (externalHomeAssets ? '<link rel="modulepreload" href="/home-motion.js">' : ""));
 
 const taBriefingRoute = "tinytapeout-TA";
 const taBriefing = readFileSync(CONTENT(taBriefingRoute + "/index.html"), "utf8");
